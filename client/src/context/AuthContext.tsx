@@ -1,94 +1,92 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserData, users } from '../data/users';
+import { UserData } from '../data/users';
+import { api } from '../lib/api';
 
 interface AuthContextType {
   user: UserData | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (userData: Partial<UserData>) => Promise<boolean>;
+  signup: (userData: any) => Promise<boolean>;
   logout: () => void;
   updateUser: (updatedUser: UserData) => void;
   isAuthenticated: boolean;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserData | null>(null);
-  const [allUsers, setAllUsers] = useState<UserData[]>(users);
   const [loading, setLoading] = useState(true);
 
-  // Initialize users and current user from localStorage on mount
   useEffect(() => {
-    const storedUsers = localStorage.getItem('local_users');
-    let currentUsers = users;
-    
-    if (storedUsers) {
-      currentUsers = JSON.parse(storedUsers);
-      setAllUsers(currentUsers);
-    }
-
-    const storedUserId = localStorage.getItem('userId');
-    if (storedUserId) {
-      const foundUser = currentUsers.find(u => u.id === storedUserId);
-      if (foundUser) {
-        setUser(foundUser);
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const profile = await api.auth.getProfile();
+          if (profile && !profile.error) {
+            setUser(profile);
+          } else {
+            localStorage.removeItem('token');
+          }
+        } catch (error) {
+          console.error("Auth initialization failed:", error);
+          localStorage.removeItem('token');
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+    initAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    const foundUser = allUsers.find(u => u.email === email && u.password === password);
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('userId', foundUser.id);
-      return true;
+    try {
+      const response = await api.auth.login({ email, password });
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+        setUser(response.user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Login failed:", error);
+      return false;
     }
-    return false;
   };
 
-  const signup = async (userData: Partial<UserData>): Promise<boolean> => {
-    const newUser: UserData = {
-      id: `user-${Date.now()}`,
-      fullName: userData.fullName || '',
-      email: userData.email || '',
-      password: userData.password || '',
-      phone: userData.phone || '',
-      memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-      orders: [],
-      addresses: [],
-      wishlistCount: 0,
-      ...userData
-    };
-
-    const updatedUsers = [...allUsers, newUser];
-    setAllUsers(updatedUsers);
-    localStorage.setItem('local_users', JSON.stringify(updatedUsers));
-    
-    // Auto login
-    setUser(newUser);
-    localStorage.setItem('userId', newUser.id);
-    return true;
+  const signup = async (userData: any): Promise<boolean> => {
+    try {
+      const response = await api.auth.register(userData);
+      if (response && !response.error) {
+        // Many backends don't return a token on register, so we might need to login after
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Signup failed:", error);
+      return false;
+    }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('userId');
+    localStorage.removeItem('token');
   };
 
   const updateUser = (updatedUser: UserData) => {
-    const updatedAllUsers = allUsers.map(u => u.id === updatedUser.id ? updatedUser : u);
-    setAllUsers(updatedAllUsers);
-    localStorage.setItem('local_users', JSON.stringify(updatedAllUsers));
     setUser(updatedUser);
   };
 
-  if (loading) {
-    return null; // Or a loading spinner
-  }
-
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, updateUser, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      signup, 
+      logout, 
+      updateUser, 
+      isAuthenticated: !!user,
+      loading
+    }}>
       {children}
     </AuthContext.Provider>
   );

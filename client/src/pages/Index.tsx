@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Plus, Minus } from "lucide-react";
-import { products } from "@/data/products";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
 import Layout from "@/components/Layout";
 
@@ -108,7 +109,12 @@ const CollectionBentoCard = ({ item, isLarge }: { item: typeof collectionLinks[0
 );
 
 const Home = () => {
-  const newArrivals = products.filter(p => p.isNew).slice(0, 8);
+  const { data: allProducts, isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => api.products.getAll(),
+  });
+
+  const newArrivals = (allProducts || []).slice(0, 8);
 
   return (
     <Layout>
@@ -184,9 +190,15 @@ const Home = () => {
           <p className="font-body text-muted-foreground text-sm uppercase tracking-widest">The latest pieces from our studio</p>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-10 lg:gap-8">
-          {newArrivals.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {isLoading ? (
+            Array(4).fill(0).map((_, i) => (
+              <div key={i} className="animate-pulse bg-muted aspect-square rounded-xl h-64 w-full"></div>
+            ))
+          ) : (
+            newArrivals.map((product: any) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          )}
         </div>
         <div className="mt-16 text-center">
             <Link to="/collection" className="inline-flex items-center gap-3 btn-hero">

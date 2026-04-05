@@ -43,7 +43,7 @@ const Signup = () => {
     }
 
     const success = await signup({
-      fullName,
+      name: fullName,
       email,
       password
     });

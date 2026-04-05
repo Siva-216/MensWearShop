@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { SlidersHorizontal, X, Star } from "lucide-react";
-import { products, Product } from "@/data/products";
+import { SlidersHorizontal, X, Star, RefreshCw } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import ProductCard from "@/components/ProductCard";
 import Layout from "@/components/Layout";
 
@@ -14,6 +15,11 @@ const priceRanges = [
 ];
 
 const Collection = () => {
+  const { data: productsData, isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => api.products.getAll(),
+  });
+
   const [searchParams] = useSearchParams();
   const initialCategory = searchParams.get("category") || "";
 
@@ -25,26 +31,26 @@ const Collection = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Derive available categories and brands from products
-  const categories = useMemo(() => Array.from(new Set(products.map((p) => p.category))).sort(), []);
-  const brands = useMemo(() => Array.from(new Set(products.map((p) => p.brand))).sort(), []);
+  const categories = useMemo(() => Array.from(new Set((productsData || []).map((p: any) => p.category as string))).sort(), [productsData]);
+  const brands = useMemo(() => Array.from(new Set((productsData || []).map((p: any) => p.brand as string))).sort(), [productsData]);
 
   const toggleFilter = (list: string[], setList: (val: string[]) => void, item: string) => {
     setList(list.includes(item) ? list.filter((i) => i !== item) : [...list, item]);
   };
 
   const filtered = useMemo(() => {
-    return products.filter((p) => {
+    return (productsData || []).filter((p: any) => {
       if (selectedCategories.length && !selectedCategories.includes(p.category)) return false;
-      if (selectedSizes.length && !p.sizes.some((s) => selectedSizes.includes(s))) return false;
+      if (selectedSizes.length && !p.sizes?.some((s: string) => selectedSizes.includes(s))) return false;
       if (selectedBrands.length && !selectedBrands.includes(p.brand)) return false;
-      if (selectedRating !== null && p.rating < selectedRating) return false;
+      if (selectedRating !== null && (p.rating || 0) < selectedRating) return false;
       if (selectedPriceRange !== null) {
         const range = priceRanges[selectedPriceRange];
         if (p.price < range.min || p.price >= range.max) return false;
       }
       return true;
     });
-  }, [selectedCategories, selectedSizes, selectedBrands, selectedRating, selectedPriceRange]);
+  }, [productsData, selectedCategories, selectedSizes, selectedBrands, selectedRating, selectedPriceRange]);
 
   const clearAll = () => {
     setSelectedCategories([]);
@@ -67,7 +73,7 @@ const Collection = () => {
       <div>
         <h3 className="text-[11px] font-body font-bold tracking-[0.2em] uppercase mb-4 text-foreground/90">Category</h3>
         <div className="space-y-2.5">
-          {categories.map((cat) => (
+          {(categories as string[]).map((cat: string) => (
             <label key={cat} className="flex items-center gap-3 cursor-pointer group">
               <input 
                 type="checkbox" 
@@ -85,7 +91,7 @@ const Collection = () => {
       <div>
         <h3 className="text-[11px] font-body font-bold tracking-[0.2em] uppercase mb-4 text-foreground/90">Brand</h3>
         <div className="max-h-48 overflow-y-auto space-y-2.5 custom-scrollbar pr-2">
-          {brands.map((brand) => (
+          {(brands as string[]).map((brand: string) => (
             <label key={brand} className="flex items-center gap-3 cursor-pointer group">
               <input 
                 type="checkbox" 
@@ -172,7 +178,7 @@ const Collection = () => {
               {selectedCategories.length === 1 ? selectedCategories[0] : "Collection"}
             </h1>
             <p className="text-xs md:text-sm font-body text-muted-foreground uppercase tracking-widest">
-              Showing {filtered.length} of {products.length} Products
+              Showing {filtered.length} of {(productsData || []).length} Products
             </p>
           </div>
           <button 

@@ -8,14 +8,17 @@ import { useState } from "react";
 const Header = () => {
   const { totalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const hasAdminPanelAccess = user?.role === 'admin' || user?.role === 'staff';
 
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/collection", label: "Shop" },
     { to: "/about", label: "About" },
     { to: "/contact", label: "Contact" },
+    ...(hasAdminPanelAccess ? [{ to: "/admin", label: "Admin" }] : []),
   ];
 
   return (

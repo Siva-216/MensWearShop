@@ -1,7 +1,8 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Heart, ShoppingBag, ArrowLeft } from "lucide-react";
-import { products } from "@/data/products";
+import { Heart, ShoppingBag, ArrowLeft, RefreshCw } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
@@ -12,14 +13,35 @@ import { toast } from "sonner";
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = products.find((p) => p.id === id);
+  const navigate = useNavigate();
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-
+  
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedImage, setSelectedImage] = useState(0);
+
+  const { data: product, isLoading: productLoading } = useQuery({
+    queryKey: ['product', id],
+    queryFn: () => api.products.getById(id!),
+    enabled: !!id,
+  });
+
+  const { data: allProducts } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => api.products.getAll(),
+  });
+
+  if (productLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-20 text-center animate-pulse flex flex-col items-center justify-center gap-4">
+          <RefreshCw className="animate-spin text-muted-foreground" size={32} />
+          <p className="text-muted-foreground font-body">Loading product details...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!product) {
     return (
@@ -33,7 +55,7 @@ const ProductDetail = () => {
   }
 
   const wishlisted = isInWishlist(product.id);
-  const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const related = (allProducts || []).filter((p: any) => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   const handleAddToCart = () => {
     if (!selectedSize) {

@@ -4,7 +4,9 @@ import { useCart } from "@/context/CartContext";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { toast } from "sonner";
-import { MapPin, Phone, Plus, Check } from "lucide-react";
+import { MapPin, Phone, Plus, Check, RefreshCw } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 import { useEffect } from "react";
 
@@ -12,6 +14,7 @@ const Checkout = () => {
   const { user, updateUser, isAuthenticated } = useAuth();
   const { items, subtotal, clearCart } = useCart();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -24,9 +27,9 @@ const Checkout = () => {
   }, [isAuthenticated, items.length, navigate]);
 
   const [selectedAddressId, setSelectedAddressId] = useState(
-    user?.addresses.find(a => a.isDefault)?.id || user?.addresses[0]?.id || ""
+    user?.addresses?.find(a => a.isDefault)?.id || user?.addresses?.[0]?.id || ""
   );
-  const [showNewAddressForm, setShowNewAddressForm] = useState(user?.addresses.length === 0);
+  const [showNewAddressForm, setShowNewAddressForm] = useState(user?.addresses?.length === 0);
   
   const [newAddress, setNewAddress] = useState({
     name: "",
@@ -37,6 +40,19 @@ const Checkout = () => {
     state: "",
     zip: "",
     label: "Home"
+  });
+
+  const orderMutation = useMutation({
+    mutationFn: (order: any) => api.orders.create(order),
+    onSuccess: () => {
+      toast.success("Order placed successfully!");
+      clearCart();
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      navigate("/profile");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Something went wrong while placing order");
+    }
   });
 
   if (!user || items.length === 0) {
@@ -52,33 +68,28 @@ const Checkout = () => {
     // Find selected address
     const selectedAddress = user.addresses.find(a => a.id === selectedAddressId);
     
-    // Create new order
-    const newOrder = {
-      id: `ORD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-      status: "Processing" as const,
-      total: subtotal,
-      address: selectedAddress,
-      paymentMethod: "Cash on Delivery",
-      trackingStep: 2, // Processing
+    // Create new order according to Backend Order class
+    const orderData = {
+      orderId: `ORD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      userId: user.id || "anonymous",
       items: items.map(item => ({
         id: item.product.id,
         name: item.product.name,
         price: item.product.price,
         quantity: item.quantity,
         image: item.product.images[0]
-      }))
+      })),
+      shippingAddress: selectedAddress ? {
+        ...selectedAddress,
+        zipCode: selectedAddress.zip // renaming to match backend zipCode
+      } : null,
+      totalAmount: subtotal,
+      paymentMethod: "Cash on Delivery",
+      status: "Processing",
+      trackingStep: 2
     };
 
-    const updatedUser = {
-      ...user,
-      orders: [newOrder, ...user.orders]
-    };
-
-    updateUser(updatedUser);
-    toast.success("Order placed successfully!");
-    clearCart();
-    navigate("/profile");
+    orderMutation.mutate(orderData);
   };
 
   const handleAddNewAddress = (e: React.FormEvent) => {
