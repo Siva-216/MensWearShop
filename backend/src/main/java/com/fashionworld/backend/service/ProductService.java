@@ -45,6 +45,7 @@ public class ProductService {
         if (productData.getPrice() > 0) product.setPrice(productData.getPrice());
         if (productData.getDiscountPrice() > 0) product.setDiscountPrice(productData.getDiscountPrice());
         if (productData.getCategoryId() != null) product.setCategoryId(productData.getCategoryId());
+        if (productData.getCategoryName() != null) product.setCategoryName(productData.getCategoryName());
         if (productData.getImages() != null) product.setImages(productData.getImages());
         if (productData.getSizes() != null) product.setSizes(productData.getSizes());
         if (productData.getColors() != null) product.setColors(productData.getColors());

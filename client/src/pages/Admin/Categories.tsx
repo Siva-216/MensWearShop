@@ -31,6 +31,21 @@ const CategoriesPage: React.FC = () => {
     queryFn: () => api.categories.getAll(),
   });
 
+  // Fetch products to count items per category dynamically
+  const { data: productsData } = useQuery({
+    queryKey: ['admin-products'],
+    queryFn: () => api.products.getAll(),
+  });
+
+  const getProductCount = (category: any) => {
+    if (!productsData) return 0;
+    return productsData.filter((p: any) => 
+      p.categoryId === category.id || 
+      p.categoryName === category.name || 
+      p.category === category.name
+    ).length;
+  };
+
   const createMutation = useMutation({
     mutationFn: (data: any) => api.categories.create(data),
     onSuccess: () => {
@@ -184,7 +199,7 @@ const CategoriesPage: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-muted">
                   <div className="text-xs font-semibold text-muted-foreground">
-                    <span className="text-foreground text-sm mr-1">0</span> Items
+                    <span className="text-foreground text-sm mr-1">{getProductCount(category)}</span> Items
                   </div>
                   <div className="flex gap-1">
                     <Button 
@@ -254,7 +269,7 @@ const CategoriesPage: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right hidden sm:block">
-                          <div className="text-xs font-bold text-foreground">{(categoriesData || []).filter((c: any) => c.parentId === mainCat.id).length} Sub-categories</div>
+                          <div className="text-xs font-bold text-foreground">{getProductCount(mainCat)} Items total</div>
                           <div className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">Structure</div>
                         </div>
                         <Button variant="ghost" size="icon" className="rounded-full" onClick={() => handleEdit(mainCat)}>

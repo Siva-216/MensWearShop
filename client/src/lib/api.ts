@@ -58,7 +58,13 @@ export const api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then(res => res.json()),
+    }).then(async res => {
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server error (${res.status}): ${text}`);
+      }
+      return res.json();
+    }),
     update: (id: string, data: any) => fetch(`${BASE_URL}/products/${id}`, {
       method: 'PUT',
       headers: getHeaders(),

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -61,10 +61,19 @@ const UsersPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [modalType, setModalType] = useState<'add' | 'edit' | 'view'>('add');
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   const { data: usersData, isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: () => api.users.getAll(),
   });
+
+  // Reset to first page when any filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter]);
 
   const isAdmin = currentUser?.role === 'admin';
 
@@ -174,12 +183,17 @@ const UsersPage: React.FC = () => {
     });
   }, [usersData, searchTerm, roleFilter]);
 
+  // Pagination Calculation
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-display font-bold tracking-tight">Users Management</h2>
-          <p className="text-muted-foreground mt-1">Manage your team and customer accounts.</p>
+          <p className="text-muted-foreground mt-1">Found {filteredUsers.length} users out of {usersData?.length || 0}</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={() => setIsBulkEmailModalOpen(true)} className="h-10 gap-2">
@@ -263,13 +277,13 @@ const UsersPage: React.FC = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : filteredUsers.length === 0 ? (
+              ) : paginatedUsers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                     No users found matching your criteria.
                   </TableCell>
                 </TableRow>
-              ) : (filteredUsers).map((user: any) => (
+              ) : paginatedUsers.map((user: any) => (
                 <TableRow key={user.id} className="group border-muted/20 transition-colors">
                   <TableCell className="pl-6">
                     <Avatar className="h-10 w-10 ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
@@ -359,13 +373,48 @@ const UsersPage: React.FC = () => {
         </CardContent>
       </Card>
       
-      <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/20 p-4 rounded-xl px-8">
-        <div>Showing {filteredUsers.length} of {usersData?.length || 0} users</div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="rounded-lg h-9 w-20">Previous</Button>
-          <Button variant="outline" size="sm" className="rounded-lg h-9 w-20 bg-primary text-primary-foreground hover:bg-primary/90">Next</Button>
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between text-sm text-muted-foreground bg-muted/20 p-4 rounded-xl px-8">
+          <div>
+            Showing <span className="text-foreground font-semibold">{startIndex + 1}</span> to{' '}
+            <span className="text-foreground font-semibold">{Math.min(startIndex + itemsPerPage, filteredUsers.length)}</span> of{' '}
+            <span className="text-foreground font-semibold">{filteredUsers.length}</span> users
+          </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="rounded-lg h-9 w-24 gap-1"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <div className="flex gap-1 mx-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? 'default' : 'ghost'}
+                  size="sm"
+                  className={`h-9 w-9 p-0 rounded-lg ${currentPage === page ? 'shadow-md shadow-primary/20' : ''}`}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="rounded-lg h-9 w-24 gap-1"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <UserModal 
         isOpen={isModalOpen}

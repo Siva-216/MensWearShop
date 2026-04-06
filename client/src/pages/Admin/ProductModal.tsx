@@ -24,6 +24,7 @@ interface ProductModalProps {
   onClose: () => void;
   onSubmit: (data: any) => void;
   product?: any;
+  categories?: any[];
 }
 
 export const ProductModal: React.FC<ProductModalProps> = ({
@@ -31,18 +32,23 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   onClose,
   onSubmit,
   product,
+  categories = [],
 }) => {
   const { register, handleSubmit, reset, setValue, watch } = useForm();
 
   useEffect(() => {
     if (product) {
-      reset(product);
+      reset({
+        ...product,
+        images: product.images && product.images.length > 0 ? product.images : [''],
+      });
     } else {
       reset({
         name: '',
         description: '',
         price: 0,
         stock: 0,
+        categoryId: '',
         categoryName: '',
         images: [''],
         brand: '',
@@ -53,11 +59,34 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   }, [product, reset]);
 
   const onFormSubmit = (data: any) => {
-    onSubmit({
-      ...data,
-      price: parseFloat(data.price),
-      stock: parseInt(data.stock),
-    });
+    // Ensure images is a clean array of strings
+    const imageList = Array.isArray(data.images) 
+      ? data.images.filter((img: string) => typeof img === 'string' && img.trim() !== '')
+      : Object.values(data.images || {}).filter((img: any) => typeof img === 'string' && img.trim() !== '');
+
+    // Destructure to separate ID from properties
+    const { id, ...rest } = data;
+
+    const formattedData = {
+      ...rest,
+      price: Number(data.price) || 0,
+      stock: Number(data.stock) || 0,
+      discountPrice: Number(data.discountPrice) || 0,
+      rating: Number(data.rating) || 0,
+      numReviews: Number(data.numReviews) || 0,
+      images: imageList,
+      sizes: Array.isArray(data.sizes) ? data.sizes : [],
+      colors: Array.isArray(data.colors) ? data.colors : [],
+    };
+
+    // Only include ID if it is a non-empty string (important for PUT requests)
+    // Omit it for new product creations (POST)
+    if (id && typeof id === 'string' && id.trim() !== '') {
+      (formattedData as any).id = id;
+    }
+
+    console.log("Submitting perfectly formatted data to backend:", formattedData);
+    onSubmit(formattedData);
   };
 
   return (
@@ -95,17 +124,27 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
               <Select 
-                onValueChange={(val) => setValue('categoryName', val)}
-                defaultValue={product?.categoryName || ''}
+                onValueChange={(val) => {
+                  const selectedCategory = categories.find(c => c.id === val);
+                  if (selectedCategory) {
+                    setValue('categoryId', selectedCategory.id);
+                    setValue('categoryName', selectedCategory.name);
+                  }
+                }}
+                defaultValue={product?.categoryId || ''}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Men">Men</SelectItem>
-                  <SelectItem value="Women">Women</SelectItem>
-                  <SelectItem value="Kids">Kids</SelectItem>
-                  <SelectItem value="Accessories">Accessories</SelectItem>
+                  {categories.map((cat: any) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                  {categories.length === 0 && (
+                    <SelectItem value="none" disabled>No categories available</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
