@@ -38,7 +38,7 @@ public class CategoryService {
         if (categoryData.getName() != null) category.setName(categoryData.getName());
         if (categoryData.getSlug() != null) category.setSlug(categoryData.getSlug());
         if (categoryData.getImage() != null) category.setImage(categoryData.getImage());
-        if (categoryData.getParentId() != null) category.setParentId(categoryData.getParentId());
+        category.setParentId(categoryData.getParentId()); // Allow null to make it a top-level category
 
         return categoryRepository.save(category);
     }
