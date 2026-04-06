@@ -1,10 +1,8 @@
 const BASE_URL = 'http://localhost:8082/api';
 
 const getHeaders = () => {
-  const token = localStorage.getItem('token');
   return {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
   };
 };
 
@@ -23,13 +21,18 @@ export const api = {
       body: JSON.stringify(data),
     }).then(res => res.json()),
 
-    getProfile: () => fetch(`${BASE_URL}/users/profile`, {
+    getProfile: (id: string) => fetch(`${BASE_URL}/users/profile/${id}`, {
       headers: getHeaders(),
     }).then(res => res.json()),
   },
 
   users: {
     getAll: () => fetch(`${BASE_URL}/users`, { headers: getHeaders() }).then(res => res.json()),
+    create: (data: any) => fetch(`${BASE_URL}/users/register`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    }).then(res => res.json()),
     update: (id: string, data: any) => fetch(`${BASE_URL}/users/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
@@ -38,6 +41,11 @@ export const api = {
     delete: (id: string) => fetch(`${BASE_URL}/users/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
+    }).then(res => res.ok),
+    sendBulkEmail: (data: { role: string, subject: string, message: string }) => fetch(`${BASE_URL}/users/bulk-email`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
     }).then(res => res.ok),
   },
 

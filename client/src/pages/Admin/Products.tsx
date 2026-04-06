@@ -37,12 +37,41 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useState } from 'react';
+import { ProductModal } from './ProductModal';
 
 const ProductsPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+
   const { data: productsData, isLoading } = useQuery({
     queryKey: ['admin-products'],
     queryFn: () => api.products.getAll(),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: any) => api.products.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success("Product created successfully");
+      setIsModalOpen(false);
+    },
+    onError: () => {
+      toast.error("Failed to create product");
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: any }) => api.products.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success("Product updated successfully");
+      setIsModalOpen(false);
+    },
+    onError: () => {
+      toast.error("Failed to update product");
+    }
   });
 
   const deleteMutation = useMutation({
@@ -56,6 +85,24 @@ const ProductsPage: React.FC = () => {
     }
   });
 
+  const handleCreate = () => {
+    setEditingProduct(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (product: any) => {
+    setEditingProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveProduct = (data: any) => {
+    if (editingProduct) {
+      updateMutation.mutate({ id: editingProduct.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
   const handleDelete = (id: string) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       deleteMutation.mutate(id);
@@ -66,19 +113,28 @@ const ProductsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-display font-bold tracking-tight">Products Management</h2>
-          <p className="text-muted-foreground mt-1">Total items in inventory: 1,429</p>
+          <p className="text-muted-foreground mt-1">Total items in inventory: {productsData?.length || 0}</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" className="h-10 gap-2 border-dashed">
             <Upload size={18} />
             Import
           </Button>
-          <Button className="h-10 gap-2 shadow-lg shadow-primary/20 bg-foreground text-background hover:bg-muted-foreground">
+          <Button 
+            className="h-10 gap-2 shadow-lg shadow-primary/20 bg-foreground text-background hover:bg-muted-foreground"
+            onClick={handleCreate}
+          >
             <PlusCircle size={18} />
             Add New Product
           </Button>
         </div>
       </div>
+      <ProductModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSubmit={handleSaveProduct} 
+        product={editingProduct} 
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-none shadow-sm bg-card hover:bg-secondary/50 transition-colors cursor-pointer">
@@ -86,7 +142,7 @@ const ProductsPage: React.FC = () => {
             <div className="p-3 bg-blue-100 text-blue-600 rounded-xl"><Box size={20} /></div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Units</p>
-              <p className="text-xl font-bold">12,450</p>
+              <p className="text-xl font-bold">{productsData?.reduce((acc: number, p: any) => acc + (p.stock || 0), 0).toLocaleString() || 0}</p>
             </div>
           </CardContent>
         </Card>
@@ -94,8 +150,8 @@ const ProductsPage: React.FC = () => {
           <CardContent className="p-4 flex items-center gap-4">
             <div className="p-3 bg-green-100 text-green-600 rounded-xl"><Tag size={20} /></div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Categories</p>
-              <p className="text-xl font-bold">24</p>
+              <p className="text-sm font-medium text-muted-foreground">Products</p>
+              <p className="text-xl font-bold">{productsData?.length || 0}</p>
             </div>
           </CardContent>
         </Card>
@@ -104,7 +160,7 @@ const ProductsPage: React.FC = () => {
             <div className="p-3 bg-amber-100 text-amber-600 rounded-xl"><RefreshCw size={20} /></div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Low Stock</p>
-              <p className="text-xl font-bold">12 Items</p>
+              <p className="text-xl font-bold">{productsData?.filter((p: any) => p.stock < 15 && p.stock > 0).length || 0} Items</p>
             </div>
           </CardContent>
         </Card>
@@ -113,7 +169,7 @@ const ProductsPage: React.FC = () => {
             <div className="p-3 bg-red-100 text-red-600 rounded-xl"><DollarSign size={20} /></div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Inventory Value</p>
-              <p className="text-xl font-bold">$1.2M</p>
+              <p className="text-xl font-bold">${productsData?.reduce((acc: number, p: any) => acc + ((p.price || 0) * (p.stock || 0)), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
           </CardContent>
         </Card>
@@ -213,7 +269,13 @@ const ProductsPage: React.FC = () => {
                       <Button variant="ghost" size="icon" title="Update Stock" className="h-8 w-8 rounded-full hover:bg-blue-50 text-blue-600">
                         <RefreshCw size={16} />
                       </Button>
-                      <Button variant="ghost" size="icon" title="Edit" className="h-8 w-8 rounded-full hover:bg-amber-50 text-amber-600">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        title="Edit" 
+                        className="h-8 w-8 rounded-full hover:bg-amber-50 text-amber-600"
+                        onClick={() => handleEdit(product)}
+                      >
                         <Edit2 size={16} />
                       </Button>
                       <Button 

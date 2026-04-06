@@ -3,18 +3,11 @@ package com.fashionworld.backend.service;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.fashionworld.backend.dto.LoginRequest;
-import com.fashionworld.backend.dto.LoginResponse;
-import com.fashionworld.backend.dto.RegisterRequest;
 import com.fashionworld.backend.model.User;
 import com.fashionworld.backend.repository.UserRepository;
-import com.fashionworld.backend.security.JwtUtil;
 
 @Service
 public class UserService {
@@ -25,48 +18,38 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    public User register(RegisterRequest registerRequest) {
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
+    public User register(User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
 
-        User user = new User();
-        user.setName(registerRequest.getName());
-        user.setEmail(registerRequest.getEmail());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setMobile(registerRequest.getMobile());
-        user.setRole(registerRequest.getRole() != null ? registerRequest.getRole() : "USER");
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole(user.getRole() != null ? user.getRole() : "USER");
 
         return userRepository.save(user);
     }
 
-    public LoginResponse login(LoginRequest loginRequest) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+    public User login(User loginUser) {
+        User user = userRepository.findByEmail(loginUser.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + loginUser.getEmail()));
 
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getEmail());
-        final String jwt = jwtUtil.generateToken(userDetails);
+        if (!passwordEncoder.matches(loginUser.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid password");
+        }
 
-        User user = userRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
         user.setPassword(null); // Clear password before sending to response
-
-        return new LoginResponse(jwt, user);
+        return user;
     }
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
-    public User updateUser(String id, RegisterRequest updateData) {
+    public Optional<User> findById(String id) {
+        return userRepository.findById(id);
+    }
+
+    public User updateUser(String id, User updateData) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
         if (updateData.getName() != null) user.setName(updateData.getName());
@@ -84,6 +67,10 @@ public class UserService {
         if (updateData.getRole() != null) user.setRole(updateData.getRole());
 
         return userRepository.save(user);
+    }
+
+    public java.util.List<User> findAll() {
+        return userRepository.findAll();
     }
 
     public void deleteUser(String id) {

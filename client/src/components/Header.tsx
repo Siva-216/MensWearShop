@@ -11,15 +11,24 @@ const Header = () => {
   const { user, isAuthenticated } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const hasAdminPanelAccess = user?.role === 'admin' || user?.role === 'staff';
+  const isAdmin = user?.role === 'admin';
+  const isStaff = user?.role === 'staff';
+  const hasAdminPanelAccess = isAdmin || isStaff;
 
-  const navLinks = [
-    { to: "/", label: "Home" },
-    { to: "/collection", label: "Shop" },
-    { to: "/about", label: "About" },
-    { to: "/contact", label: "Contact" },
-    ...(hasAdminPanelAccess ? [{ to: "/admin", label: "Admin" }] : []),
-  ];
+  const navLinks = isAdmin 
+    ? [
+        { to: "/admin", label: "Admin Dashboard" },
+        { to: "/admin/products", label: "Products" },
+        { to: "/admin/orders", label: "Orders" },
+        { to: "/admin/users", label: "Users" },
+      ]
+    : [
+        { to: "/", label: "Home" },
+        { to: "/collection", label: "Shop" },
+        { to: "/about", label: "About" },
+        { to: "/contact", label: "Contact" },
+        ...(isStaff ? [{ to: "/admin", label: "Admin Panel" }] : []),
+      ];
 
   return (
     <>
@@ -52,23 +61,27 @@ const Header = () => {
           <div className="flex items-center gap-3 lg:gap-4">
             {isAuthenticated ? (
               <>
-                <Link to="/wishlist" className="relative p-2 text-foreground hover:text-muted-foreground transition-colors">
-                  <Heart size={20} />
-                  {wishlistItems.length > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[10px] font-body font-bold rounded-full flex items-center justify-center">
-                      {wishlistItems.length}
-                    </span>
-                  )}
-                </Link>
-                <Link to="/cart" className="relative p-2 text-foreground hover:text-muted-foreground transition-colors">
-                  <ShoppingBag size={20} />
-                  {totalItems > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[10px] font-body font-bold rounded-full flex items-center justify-center">
-                      {totalItems}
-                    </span>
-                  )}
-                </Link>
-                <Link to="/profile" className="p-2 text-foreground hover:text-muted-foreground transition-colors hidden lg:block">
+                {!isAdmin && (
+                  <>
+                    <Link to="/wishlist" className="relative p-2 text-foreground hover:text-muted-foreground transition-colors">
+                      <Heart size={20} />
+                      {wishlistItems.length > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[10px] font-body font-bold rounded-full flex items-center justify-center">
+                          {wishlistItems.length}
+                        </span>
+                      )}
+                    </Link>
+                    <Link to="/cart" className="relative p-2 text-foreground hover:text-muted-foreground transition-colors">
+                      <ShoppingBag size={20} />
+                      {totalItems > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[10px] font-body font-bold rounded-full flex items-center justify-center">
+                          {totalItems}
+                        </span>
+                      )}
+                    </Link>
+                  </>
+                )}
+                <Link to="/profile" className="p-2 text-foreground hover:text-muted-foreground transition-colors">
                   <User size={20} />
                 </Link>
               </>

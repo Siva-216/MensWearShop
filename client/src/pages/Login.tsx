@@ -11,7 +11,7 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from || "/profile";
+  const from = location.state?.from || "/";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -85,10 +85,10 @@ const OrdersPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { icon: ShoppingBag, label: 'New Orders', value: '12', color: 'blue' },
-          { icon: Truck, label: 'In Transit', value: '45', color: 'amber' },
-          { icon: PackageCheck, label: 'Completed', value: '128', color: 'green' },
-          { icon: XCircle, label: 'Cancelled', value: '5', color: 'red' },
+          { icon: ShoppingBag, label: 'New Orders', value: ordersData?.filter((o: any) => o.status === 'Placed').length.toString() || '0', color: 'blue' },
+          { icon: Truck, label: 'In Transit', value: ordersData?.filter((o: any) => o.status === 'Shipped').length.toString() || '0', color: 'amber' },
+          { icon: PackageCheck, label: 'Completed', value: ordersData?.filter((o: any) => o.status === 'Delivered').length.toString() || '0', color: 'green' },
+          { icon: XCircle, label: 'Cancelled', value: ordersData?.filter((o: any) => o.status === 'Cancelled').length.toString() || '0', color: 'red' },
         ].map((stat, i) => (
           <Card key={i} className="border-none shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4 flex items-center gap-4">

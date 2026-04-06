@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import com.fashionworld.backend.service.OrderService;
 
 @RestController
 @RequestMapping("/api/orders")
+@CrossOrigin(origins = "*")
 public class OrderController {
 
     @Autowired
@@ -61,8 +63,19 @@ public class OrderController {
     public ResponseEntity<Order> updateOrderStatus(
             @PathVariable String id,
             @RequestParam String status,
-            @RequestParam int trackingStep) {
-        Order updatedOrder = orderService.updateOrderStatus(id, status, trackingStep);
+            @RequestParam(required = false, defaultValue = "-1") int trackingStep) {
+        
+        int step = trackingStep;
+        if (step == -1) {
+            switch (status.toUpperCase()) {
+                case "PLACED": step = 1; break;
+                case "SHIPPED": step = 2; break;
+                case "DELIVERED": step = 3; break;
+                case "CANCELLED": step = 4; break;
+                default: step = 1;
+            }
+        }
+        Order updatedOrder = orderService.updateOrderStatus(id, status, step);
         if (updatedOrder != null) {
             return new ResponseEntity<>(updatedOrder, HttpStatus.OK);
         } else {

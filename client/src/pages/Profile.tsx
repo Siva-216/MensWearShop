@@ -8,10 +8,12 @@ import { useWishlist } from "@/context/WishlistContext";
 import { UserData } from "@/data/users";
 
 const Profile = () => {
-  const [activeTab, setActiveTab] = useState("overview");
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
   const { items: wishlist } = useWishlist();
+  
+  const isAdmin = user?.role === 'admin';
+  const [activeTab, setActiveTab] = useState(isAdmin ? "info" : "overview");
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -29,8 +31,8 @@ const Profile = () => {
   };
 
   const menuItems = [
-    { id: "overview", label: "Overview", icon: User },
-    { id: "orders", label: "Orders", icon: Package },
+    ...(!isAdmin ? [{ id: "overview", label: "Overview", icon: User }] : []),
+    ...(!isAdmin ? [{ id: "orders", label: "Orders", icon: Package }] : []),
     { id: "info", label: "User Info", icon: FileText },
     { id: "settings", label: "Settings", icon: SettingsIcon },
   ];
@@ -93,8 +95,10 @@ const Profile = () => {
 
 // --- TABS ---
 
-const OverviewTab = ({ user, wishlistCount }: { user: UserData; wishlistCount: number }) => (
-  <div className="animate-fade-in space-y-12">
+const OverviewTab = ({ user, wishlistCount }: { user: UserData; wishlistCount: number }) => {
+  const isAdmin = user.role === 'admin';
+  return (
+    <div className="animate-fade-in space-y-12">
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-stretch">
       {/* Profile Card */}
       <div className="lg:col-span-2 bg-muted p-6 lg:p-8 rounded-sm flex flex-col h-full">
@@ -123,74 +127,79 @@ const OverviewTab = ({ user, wishlistCount }: { user: UserData; wishlistCount: n
       </div>
     </div>
 
-    {/* Recent Orders */}
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-display text-xl font-bold flex items-center gap-2">
-          <Package size={20} /> Recent Orders
-        </h2>
-        {user.orders.length > 3 && (
-          <button className="text-xs font-body font-bold underline underline-offset-4">View All</button>
-        )}
-      </div>
-      <div className="space-y-0 border-t border-border">
-        {user.orders.length > 0 ? (
-          user.orders.slice(0, 3).map((order) => (
-            <div key={order.id} className="flex flex-row items-center justify-between py-5 border-b border-border">
-              <div>
-                <p className="font-body font-bold text-sm mb-1">Order #{order.id}</p>
-                <p className="text-xs font-body text-muted-foreground">{order.date} · {typeof order.items === 'number' ? order.items : order.items.length} items</p>
-              </div>
-              <div className="text-right">
-                <p className="font-body font-bold text-sm mb-1">${order.total}</p>
-                <p className={`text-[10px] font-body font-bold tracking-widest uppercase ${
-                  order.status === 'Delivered' ? 'text-green-600' : 'text-foreground'
-                }`}>{order.status}</p>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="py-10 text-center border-b border-border border-dashed">
-            <p className="text-sm font-body text-muted-foreground">No orders placed yet.</p>
+    {!isAdmin && (
+      <>
+        {/* Recent Orders */}
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-display text-xl font-bold flex items-center gap-2">
+              <Package size={20} /> Recent Orders
+            </h2>
+            {user.orders.length > 3 && (
+              <button className="text-xs font-body font-bold underline underline-offset-4">View All</button>
+            )}
           </div>
-        )}
-      </div>
-    </div>
+          <div className="space-y-0 border-t border-border">
+            {user.orders.length > 0 ? (
+              user.orders.slice(0, 3).map((order) => (
+                <div key={order.id} className="flex flex-row items-center justify-between py-5 border-b border-border">
+                  <div>
+                    <p className="font-body font-bold text-sm mb-1">Order #{order.id}</p>
+                    <p className="text-xs font-body text-muted-foreground">{order.date} · {typeof order.items === 'number' ? order.items : order.items.length} items</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-body font-bold text-sm mb-1">${order.total}</p>
+                    <p className={`text-[10px] font-body font-bold tracking-widest uppercase ${
+                      order.status === 'Delivered' ? 'text-green-600' : 'text-foreground'
+                    }`}>{order.status}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="py-10 text-center border-b border-border border-dashed">
+                <p className="text-sm font-body text-muted-foreground">No orders placed yet.</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-    {/* Saved Addresses */}
-    <div>
-      <h2 className="font-display text-xl font-bold mb-6 flex items-center gap-2">
-        <MapPin size={20} /> Saved Addresses
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {user.addresses.length > 0 ? (
-          user.addresses.map((addr) => (
-            <div key={addr.id} className="border border-border p-6 bg-card shadow-sm">
-              <p className="text-xs font-body font-bold tracking-[0.15em] uppercase mb-3">{addr.label || addr.name}</p>
-              <div className="space-y-1">
-                {addr.addressLines.map((line, i) => (
-                  <p key={i} className="text-sm font-body text-muted-foreground leading-relaxed">{line}</p>
-                ))}
-                <p className="text-sm font-body text-muted-foreground leading-relaxed">
-                  {addr.city}, {addr.state} {addr.zip}
-                </p>
-                {addr.phone && (
-                  <p className="text-xs font-body text-muted-foreground leading-relaxed mt-2 flex items-center gap-1">
-                    <Phone size={10} /> {addr.phone}
-                  </p>
-                )}
+        {/* Saved Addresses */}
+        <div>
+          <h2 className="font-display text-xl font-bold mb-6 flex items-center gap-2">
+            <MapPin size={20} /> Saved Addresses
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {user.addresses.length > 0 ? (
+              user.addresses.map((addr) => (
+                <div key={addr.id} className="border border-border p-6 bg-card shadow-sm">
+                  <p className="text-xs font-body font-bold tracking-[0.15em] uppercase mb-3">{addr.label || addr.name}</p>
+                  <div className="space-y-1">
+                    {addr.addressLines.map((line, i) => (
+                      <p key={i} className="text-sm font-body text-muted-foreground leading-relaxed">{line}</p>
+                    ))}
+                    <p className="text-sm font-body text-muted-foreground leading-relaxed">
+                      {addr.city}, {addr.state} {addr.zip}
+                    </p>
+                    {addr.phone && (
+                      <p className="text-xs font-body text-muted-foreground leading-relaxed mt-2 flex items-center gap-1">
+                        <Phone size={10} /> {addr.phone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full py-10 text-center border border-dashed border-border">
+                <p className="text-sm font-body text-muted-foreground">No addresses saved yet.</p>
               </div>
-            </div>
-          ))
-        ) : (
-          <div className="col-span-full py-10 text-center border border-dashed border-border">
-            <p className="text-sm font-body text-muted-foreground">No addresses saved yet.</p>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      </>
+    )}
     </div>
-  </div>
-);
+  );
+};
 
 const OrdersTab = ({ orders }: { orders: any[] }) => {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -380,6 +389,7 @@ const OrdersTab = ({ orders }: { orders: any[] }) => {
 const UserInfoTab = ({ storedUser }: { storedUser: UserData }) => {
   const [isEditing, setIsEditing] = useState(false);
   const { updateUser } = useAuth();
+  const isAdmin = storedUser.role === 'admin';
   const [formData, setFormData] = useState({
     fullName: storedUser.fullName,
     email: storedUser.email,
@@ -394,18 +404,22 @@ const UserInfoTab = ({ storedUser }: { storedUser: UserData }) => {
 
   const [showAddressForm, setShowAddressForm] = useState(false);
 
-  const handleSaveInfo = () => {
+  const handleSaveInfo = async () => {
     const updatedUser = {
       ...storedUser,
       ...formData,
       addresses: addresses
     };
-    updateUser(updatedUser);
-    setIsEditing(false);
-    toast.success("Profile information updated successfully!");
+    const success = await updateUser(updatedUser);
+    if (success) {
+      setIsEditing(false);
+      toast.success("Profile information updated successfully!");
+    } else {
+      toast.error("Failed to update profile information.");
+    }
   };
 
-  const handleAddAddress = (e: React.FormEvent) => {
+  const handleAddAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const name = (form.elements[0] as HTMLInputElement).value;
@@ -432,38 +446,50 @@ const UserInfoTab = ({ storedUser }: { storedUser: UserData }) => {
 
     const newAddresses = [...addresses, newAddress];
     setAddresses(newAddresses);
-    updateUser({
+    const success = await updateUser({
       ...storedUser,
       addresses: newAddresses
     });
     
-    setShowAddressForm(false);
-    toast.success("Address added successfully!");
+    if (success) {
+      setShowAddressForm(false);
+      toast.success("Address added successfully!");
+    } else {
+      toast.error("Failed to add address.");
+    }
   };
 
-  const handleSetDefault = (id: string) => {
+  const handleSetDefault = async (id: string) => {
     const newAddresses = addresses.map(addr => ({
       ...addr,
       isDefault: addr.id === id
     }));
     setAddresses(newAddresses);
     
-    updateUser({
+    const success = await updateUser({
       ...storedUser,
       addresses: newAddresses
     });
     
-    toast.success("Default address updated!");
+    if (success) {
+      toast.success("Default address updated!");
+    } else {
+      toast.error("Failed to update default address.");
+    }
   };
 
-  const handleRemoveAddress = (id: string) => {
+  const handleRemoveAddress = async (id: string) => {
     const newAddresses = addresses.filter(addr => addr.id !== id);
     setAddresses(newAddresses);
-    updateUser({
+    const success = await updateUser({
       ...storedUser,
       addresses: newAddresses
     });
-    toast.info("Address removed.");
+    if (success) {
+      toast.info("Address removed.");
+    } else {
+      toast.error("Failed to remove address.");
+    }
   }
 
   return (
@@ -520,111 +546,122 @@ const UserInfoTab = ({ storedUser }: { storedUser: UserData }) => {
         </div>
       </div>
 
-      {/* Saved Addresses Section */}
-      <div className="pt-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-4 border-b border-border/50">
-          <h2 className="font-display text-3xl font-bold">Saved Addresses</h2>
-          {!showAddressForm && (
-            <button 
-              onClick={() => setShowAddressForm(true)} 
-              className="text-[11px] font-body font-bold uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 mt-4 sm:mt-0"
-            >
-              <Plus size={14} /> ADD NEW
-            </button>
+      {/* Saved Addresses Section - Hide for Admin */}
+      {!isAdmin && (
+        <div className="pt-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-4 border-b border-border/50">
+            <h2 className="font-display text-3xl font-bold">Saved Addresses</h2>
+            {!showAddressForm && (
+              <button 
+                onClick={() => setShowAddressForm(true)} 
+                className="text-[11px] font-body font-bold uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 mt-4 sm:mt-0"
+              >
+                <Plus size={14} /> ADD NEW
+              </button>
+            )}
+          </div>
+
+          {showAddressForm ? (
+            <form onSubmit={handleAddAddress} className="max-w-2xl border border-border p-8 bg-card space-y-6 shadow-sm animate-fade-in relative">
+              <div className="absolute top-0 left-0 w-full h-1 bg-foreground" />
+              <h3 className="font-display text-xl font-bold mb-6">Add New Address</h3>
+              
+              <div>
+                <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Recipient Name</label>
+                <input type="text" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" placeholder="Full Name" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Street Address</label>
+                <input type="text" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm mb-3" placeholder="Line 1" />
+                <input type="text" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" placeholder="Line 2 (Optional)" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div>
+                  <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">City</label>
+                  <input type="text" required id="city" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">State</label>
+                  <input type="text" required id="state" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Zip Code</label>
+                  <input type="text" required id="zip" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Country</label>
+                  <input type="text" required id="country" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Contact Number</label>
+                  <input type="tel" required id="phone" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-6">
+                <button type="submit" className="btn-hero py-3 flex-1 text-xs font-bold uppercase tracking-widest">Save Address</button>
+                <button type="button" onClick={() => setShowAddressForm(false)} className="py-3 flex-1 text-xs font-bold border border-border hover:bg-muted transition-colors text-center uppercase tracking-widest">Cancel</button>
+              </div>
+            </form>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {addresses.map((addr) => (
+                <div key={addr.id} className={`p-6 border transition-all duration-300 relative ${addr.isDefault ? 'border-foreground bg-muted outline outline-1 outline-foreground/10' : 'border-border bg-card'}`}>
+                  {addr.isDefault && (
+                    <div className="absolute -top-3 left-4 bg-foreground text-background text-[9px] font-bold tracking-widest uppercase px-2 py-1">DEFAULT</div>
+                  )}
+                  
+                  <p className="text-[10px] font-body font-bold tracking-[0.2em] uppercase text-muted-foreground mb-4">{addr.label || 'Address'}</p>
+                  <p className="font-display font-bold text-base mb-3">{addr.name}</p>
+                  
+                  <div className="space-y-1 mb-6">
+                    {addr.addressLines.map((line, idx) => (
+                      <p key={idx} className="text-sm font-body text-muted-foreground leading-relaxed">{line}</p>
+                    ))}
+                    <p className="text-sm font-body text-muted-foreground leading-relaxed">
+                      {addr.city}, {addr.state} {addr.zip}
+                    </p>
+                    {addr.phone && (
+                      <p className="text-xs font-body text-muted-foreground flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
+                        <Phone size={12} className="text-foreground" /> {addr.phone}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4 mt-auto">
+                    {!addr.isDefault && (
+                      <button onClick={() => handleSetDefault(addr.id)} className="text-[10px] font-bold font-body uppercase tracking-[0.15em] text-foreground hover:underline underline-offset-4">SET DEFAULT</button>
+                    )}
+                    <button onClick={() => handleRemoveAddress(addr.id)} className="text-[10px] font-bold font-body uppercase tracking-[0.15em] text-red-500 hover:bg-red-50 px-2 py-1 transition-colors border border-transparent hover:border-red-100">REMOVE</button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
-
-        {showAddressForm ? (
-          <form onSubmit={handleAddAddress} className="max-w-2xl border border-border p-8 bg-card space-y-6 shadow-sm animate-fade-in relative">
-            <div className="absolute top-0 left-0 w-full h-1 bg-foreground" />
-            <h3 className="font-display text-xl font-bold mb-6">Add New Address</h3>
-            
-            <div>
-              <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Recipient Name</label>
-              <input type="text" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" placeholder="Full Name" />
-            </div>
-
-            <div>
-              <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Street Address</label>
-              <input type="text" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm mb-3" placeholder="Line 1" />
-              <input type="text" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" placeholder="Line 2 (Optional)" />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div>
-                <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">City</label>
-                <input type="text" required id="city" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">State</label>
-                <input type="text" required id="state" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Zip Code</label>
-                <input type="text" required id="zip" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Country</label>
-                <input type="text" required id="country" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Contact Number</label>
-                <input type="tel" required id="phone" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
-              </div>
-            </div>
-
-            <div className="flex gap-4 pt-6">
-              <button type="submit" className="btn-hero py-3 flex-1 text-xs font-bold uppercase tracking-widest">Save Address</button>
-              <button type="button" onClick={() => setShowAddressForm(false)} className="py-3 flex-1 text-xs font-bold border border-border hover:bg-muted transition-colors text-center uppercase tracking-widest">Cancel</button>
-            </div>
-          </form>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {addresses.map((addr) => (
-              <div key={addr.id} className={`p-6 border transition-all duration-300 relative ${addr.isDefault ? 'border-foreground bg-muted outline outline-1 outline-foreground/10' : 'border-border bg-card'}`}>
-                {addr.isDefault && (
-                  <div className="absolute -top-3 left-4 bg-foreground text-background text-[9px] font-bold tracking-widest uppercase px-2 py-1">DEFAULT</div>
-                )}
-                
-                <p className="text-[10px] font-body font-bold tracking-[0.2em] uppercase text-muted-foreground mb-4">{addr.label || 'Address'}</p>
-                <p className="font-display font-bold text-base mb-3">{addr.name}</p>
-                
-                <div className="space-y-1 mb-6">
-                  {addr.addressLines.map((line, idx) => (
-                    <p key={idx} className="text-sm font-body text-muted-foreground leading-relaxed">{line}</p>
-                  ))}
-                  <p className="text-sm font-body text-muted-foreground leading-relaxed">
-                    {addr.city}, {addr.state} {addr.zip}
-                  </p>
-                  {addr.phone && (
-                    <p className="text-xs font-body text-muted-foreground flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
-                      <Phone size={12} className="text-foreground" /> {addr.phone}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4 mt-auto">
-                  {!addr.isDefault && (
-                    <button onClick={() => handleSetDefault(addr.id)} className="text-[10px] font-bold font-body uppercase tracking-[0.15em] text-foreground hover:underline underline-offset-4">SET DEFAULT</button>
-                  )}
-                  <button onClick={() => handleRemoveAddress(addr.id)} className="text-[10px] font-bold font-body uppercase tracking-[0.15em] text-red-500 hover:bg-red-50 px-2 py-1 transition-colors border border-transparent hover:border-red-100">REMOVE</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };
 
 const SettingsTab = () => {
-  const handleDelete = () => {
+  const { deleteAccount } = useAuth();
+  const navigate = useNavigate();
+
+  const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-      toast.success("Account deleted.");
+      const success = await deleteAccount();
+      if (success) {
+        toast.success("Account deleted successfully.");
+        navigate("/");
+      } else {
+        toast.error("Failed to delete account.");
+      }
     }
   };
 

@@ -15,9 +15,27 @@ public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private com.fashionworld.backend.repository.UserRepository userRepository;
+
     public Order createOrder(Order order) {
         // Implementation logic for calculations or stock checks could be added here
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        
+        // Notify user about order creation
+        notifyUser(savedOrder, "Your Order " + savedOrder.getOrderId() + " Placed Successfully!", 
+            "Hello,\n\nYour order " + savedOrder.getOrderId() + " has been placed successfully. Thank you for shopping with FashionWorld!");
+        
+        return savedOrder;
+    }
+
+    private void notifyUser(Order order, String subject, String body) {
+        userRepository.findById(order.getUserId()).ifPresent(user -> {
+            emailService.sendSimpleEmail(user.getEmail(), subject, body);
+        });
     }
 
     public List<Order> getOrdersByUserId(String userId) {
@@ -42,7 +60,13 @@ public class OrderService {
             Order order = orderOptional.get();
             order.setStatus(status);
             order.setTrackingStep(trackingStep);
-            return orderRepository.save(order);
+            Order updatedOrder = orderRepository.save(order);
+
+            // Notify user about status update
+            notifyUser(updatedOrder, "Order Update: " + updatedOrder.getOrderId(), 
+                "Hello,\n\nYour order " + updatedOrder.getOrderId() + " status has been updated to: " + status + ".");
+            
+            return updatedOrder;
         }
         return null;
     }

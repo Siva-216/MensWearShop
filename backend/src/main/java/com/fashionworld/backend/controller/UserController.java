@@ -9,54 +9,66 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fashionworld.backend.dto.LoginRequest;
-import com.fashionworld.backend.dto.LoginResponse;
-import com.fashionworld.backend.dto.RegisterRequest;
 import com.fashionworld.backend.model.User;
-import com.fashionworld.backend.security.JwtUtil;
 import com.fashionworld.backend.service.UserService;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*") // Update according to frontend requirements
+@CrossOrigin(origins = "*")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private com.fashionworld.backend.service.EmailService emailService;
+
+    @GetMapping
+    public ResponseEntity<?> getAllUsers() {
+        try {
+            java.util.List<User> users = userService.findAll();
+            users.forEach(u -> u.setPassword(null));
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching users: " + e.getMessage());
+        }
+    }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
-            User user = userService.register(registerRequest);
-            return ResponseEntity.ok(user);
+            User registeredUser = userService.register(user);
+            
+            // Send welcome email
+            emailService.sendSimpleEmail(registeredUser.getEmail(), "Welcome to FashionWorld!", 
+                "Hello " + registeredUser.getName() + ",\n\nWelcome to FashionWorld! We're thrilled to have you as part of our community. Explore our latest collections and enjoy a seamless shopping experience.");
+            
+            return ResponseEntity.ok(registeredUser);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> loginUser(@RequestBody User user) {
         try {
-            LoginResponse response = userService.login(loginRequest);
-            return ResponseEntity.ok(response);
+            User loggedInUser = userService.login(user);
+            return ResponseEntity.ok(loggedInUser);
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Invalid credentials: " + e.getMessage());
         }
     }
 
-    @GetMapping("/profile")
-    public ResponseEntity<?> getUserProfile(@RequestHeader("Authorization") String token) {
+    @GetMapping("/profile/{id}")
+    public ResponseEntity<?> getUserProfile(@PathVariable String id) {
         try {
-            String jwt = token.substring(7);
-            String email = jwtUtil.extractUsername(jwt);
-            User user = userService.findByEmail(email).orElseThrow();
+            // Simplified: Fetch profile by ID
+            User user = userService.findById(id).orElseGet(() -> 
+                userService.findByEmail(id).orElseThrow(() -> new RuntimeException("User not found"))
+            );
             user.setPassword(null);
             return ResponseEntity.ok(user);
         } catch (Exception e) {
@@ -65,18 +77,8 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateProfile(@PathVariable String id, @RequestBody RegisterRequest updateData,
-            @RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> updateProfile(@PathVariable String id, @RequestBody User updateData) {
         try {
-            String jwt = token.substring(7);
-            String email = jwtUtil.extractUsername(jwt);
-            User currentUser = userService.findByEmail(email).orElseThrow();
-
-            // Simple security: Allow only self-update or admin
-            if (!currentUser.getId().equals(id) && !"ADMIN".equals(currentUser.getRole())) {
-                return ResponseEntity.status(403).body("You are not authorized to update this profile");
-            }
-
             User updatedUser = userService.updateUser(id, updateData);
             updatedUser.setPassword(null);
             return ResponseEntity.ok(updatedUser);
@@ -86,21 +88,31 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteAccount(@PathVariable String id, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> deleteAccount(@PathVariable String id) {
         try {
-            String jwt = token.substring(7);
-            String email = jwtUtil.extractUsername(jwt);
-            User currentUser = userService.findByEmail(email).orElseThrow();
-
-            // Simple security: Allow only self-deletion or admin
-            if (!currentUser.getId().equals(id) && !"ADMIN".equals(currentUser.getRole())) {
-                return ResponseEntity.status(403).body("You are not authorized to delete this account");
-            }
-
             userService.deleteUser(id);
             return ResponseEntity.ok("User account deleted successfully");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error deleting account: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/bulk-email")
+    public ResponseEntity<?> sendBulkEmail(@RequestBody java.util.Map<String, String> emailData) {
+        try {
+            String role = emailData.get("role");
+            String subject = emailData.get("subject");
+            String message = emailData.get("message");
+            
+            java.util.List<User> recipients = userService.findAll().stream()
+                .filter(u -> role.equalsIgnoreCase("all") || (u.getRole() != null && u.getRole().equalsIgnoreCase(role)))
+                .collect(java.util.stream.Collectors.toList());
+            
+            recipients.forEach(u -> emailService.sendSimpleEmail(u.getEmail(), subject, message));
+            
+            return ResponseEntity.ok("Successfully sent email to " + recipients.size() + " " + (role.equalsIgnoreCase("all") ? "users" : role + "s") + ".");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error sending bulk email: " + e.getMessage());
         }
     }
 }

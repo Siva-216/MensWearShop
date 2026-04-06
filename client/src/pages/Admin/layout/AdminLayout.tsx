@@ -28,6 +28,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
 const sidebarItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
   { icon: Users, label: 'Users Management', path: '/admin/users' },
@@ -42,6 +45,13 @@ const sidebarItems = [
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const location = useLocation();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="flex h-screen bg-muted/30 font-body">
@@ -87,6 +97,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="p-4 border-t">
           <Button 
             variant="ghost" 
+            onClick={handleLogout}
             className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10"
           >
             <LogOut size={20} />
@@ -117,26 +128,30 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 p-1 pr-3 rounded-full hover:bg-muted transition-colors">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://github.com/shadcn.png" />
-                    <AvatarFallback>AD</AvatarFallback>
+                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.fullName}`} />
+                    <AvatarFallback>{user?.fullName?.charAt(0) || 'A'}</AvatarFallback>
                   </Avatar>
                   <div className="text-left hidden sm:block">
-                    <p className="text-sm font-semibold leading-none">Admin</p>
-                    <p className="text-xs text-muted-foreground">admin@fashionworld.com</p>
+                    <p className="text-sm font-semibold leading-none">{user?.fullName || 'Admin'}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" /> Profile
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center">
+                    <User className="mr-2 h-4 w-4" /> Profile
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" /> Settings
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/settings" className="flex items-center">
+                    <Settings className="mr-2 h-4 w-4" /> Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive focus:text-destructive">
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" /> Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>

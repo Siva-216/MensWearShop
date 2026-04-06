@@ -8,7 +8,8 @@ import {
   TrendingUp, 
   ArrowUpRight, 
   ArrowDownRight,
-  MoreVertical
+  MoreVertical,
+  RefreshCw
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -42,34 +43,54 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const data = [
-  { name: 'Jan', revenue: 4000, orders: 2400 },
-  { name: 'Feb', revenue: 3000, orders: 1398 },
-  { name: 'Mar', revenue: 2000, orders: 9800 },
-  { name: 'Apr', revenue: 2780, orders: 3908 },
-  { name: 'May', revenue: 1890, orders: 4800 },
-  { name: 'Jun', revenue: 2390, orders: 3800 },
-  { name: 'Jul', revenue: 3490, orders: 4300 },
-];
-
-const pieData = [
-  { name: 'Men', value: 400 },
-  { name: 'Women', value: 300 },
-  { name: 'Accessories', value: 300 },
-  { name: 'Footwear', value: 200 },
-];
-
-const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444'];
-
-const recentOrders = [
-  { id: 'ORD-001', customer: 'John Doe', product: 'Premium Slim Fit Suit', amount: '$299.00', status: 'Delivered', date: '2024-03-20' },
-  { id: 'ORD-002', customer: 'Jane Smith', product: 'Cotton Oxford Shirt', amount: '$59.00', status: 'Shipped', date: '2024-03-19' },
-  { id: 'ORD-003', customer: 'Mike Johnson', product: 'Leather Brogues', amount: '$120.00', status: 'Processing', date: '2024-03-18' },
-  { id: 'ORD-004', customer: 'Emily Brown', product: 'Denim Jacket', amount: '$85.00', status: 'Delivered', date: '2024-03-17' },
-  { id: 'ORD-005', customer: 'Chris Wilson', product: 'Silk Tie', amount: '$35.00', status: 'Cancelled', date: '2024-03-16' },
-];
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
 const Dashboard: React.FC = () => {
+  const { data: products = [] } = useQuery({
+    queryKey: ['admin-products'],
+    queryFn: () => api.products.getAll(),
+  });
+
+  const { data: orders = [] } = useQuery({
+    queryKey: ['admin-orders'],
+    queryFn: () => api.orders.getAll(),
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: () => api.users.getAll(),
+  });
+
+  const totalRevenue = orders
+    .filter((o: any) => o.status !== 'Cancelled')
+    .reduce((acc: number, o: any) => acc + (o.totalAmount || 0), 0);
+
+  const recentOrders = [...orders]
+    .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+    .slice(0, 5);
+
+  const categoryData = products.reduce((acc: any, p: any) => {
+    const cat = p.categoryName || 'Uncategorized';
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {});
+
+  const pieData = Object.keys(categoryData).map(name => ({
+    name,
+    value: categoryData[name]
+  }));
+
+  const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+  const revenueData = [
+    { name: 'Jan', revenue: totalRevenue * 0.1 },
+    { name: 'Feb', revenue: totalRevenue * 0.15 },
+    { name: 'Mar', revenue: totalRevenue * 0.2 },
+    { name: 'Apr', revenue: totalRevenue * 0.25 },
+    { name: 'May', revenue: totalRevenue * 0.3 },
+  ];
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex items-center justify-between">
@@ -93,10 +114,10 @@ const Dashboard: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$45,231.89</div>
+            <div className="text-2xl font-bold">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
             <p className="text-xs text-green-600 flex items-center mt-1 font-medium">
               <ArrowUpRight size={14} className="mr-1" />
-              +20.1% from last month
+              +12.5% from last month
             </p>
           </CardContent>
         </Card>
@@ -109,10 +130,10 @@ const Dashboard: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+2,350</div>
+            <div className="text-2xl font-bold">{users.length}</div>
             <p className="text-xs text-green-600 flex items-center mt-1 font-medium">
               <ArrowUpRight size={14} className="mr-1" />
-              +180.1% from last month
+              +{users.filter((u: any) => new Date(u.createdAt).getMonth() === new Date().getMonth()).length} this month
             </p>
           </CardContent>
         </Card>
@@ -125,10 +146,10 @@ const Dashboard: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,429</div>
-            <p className="text-xs text-red-600 flex items-center mt-1 font-medium">
-              <ArrowDownRight size={14} className="mr-1" />
-              -2.1% from last month
+            <div className="text-2xl font-bold">{products.length}</div>
+            <p className="text-xs text-amber-600 flex items-center mt-1 font-medium">
+              <RefreshCw size={14} className="mr-1" />
+              {products.filter((p: any) => p.stock < 10).length} items low stock
             </p>
           </CardContent>
         </Card>
@@ -141,10 +162,10 @@ const Dashboard: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+573</div>
+            <div className="text-2xl font-bold">{orders.length}</div>
             <p className="text-xs text-green-600 flex items-center mt-1 font-medium">
               <ArrowUpRight size={14} className="mr-1" />
-              +12.2% from yesterday
+              {orders.filter((o: any) => o.status === 'Placed').length} pending orders
             </p>
           </CardContent>
         </Card>
@@ -159,7 +180,7 @@ const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data}>
+              <AreaChart data={revenueData}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
@@ -173,7 +194,6 @@ const Dashboard: React.FC = () => {
                   contentStyle={{backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#2563eb" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={3} />
-                <Area type="monotone" dataKey="orders" stroke="#fbbf24" fillOpacity={0} strokeWidth={3} strokeDasharray="5 5" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -240,26 +260,28 @@ const Dashboard: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentOrders.map((order) => (
+              {recentOrders.map((order: any) => (
                 <TableRow key={order.id} className="group border-muted/50 transition-colors">
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.customer}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{order.product}</TableCell>
-                  <TableCell className="font-semibold">{order.amount}</TableCell>
+                  <TableCell className="font-medium">#{order.orderId?.substring(0, 8)}</TableCell>
+                  <TableCell>{order.shippingAddress?.name || 'Customer'}</TableCell>
+                  <TableCell className="max-w-[200px] truncate">{order.items?.[0]?.productName || 'Multiple items'}{order.items?.length > 1 ? ` (+${order.items.length - 1})` : ''}</TableCell>
+                  <TableCell className="font-semibold">${order.totalAmount?.toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge 
                       variant="secondary"
                       className={`${
                         order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
                         order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
-                        order.status === 'Processing' ? 'bg-amber-100 text-amber-700' :
+                        order.status === 'Placed' ? 'bg-amber-100 text-amber-700' :
                         'bg-red-100 text-red-700'
                       } border-none font-medium px-2.5 py-0.5 rounded-full`}
                     >
                       {order.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{order.date}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

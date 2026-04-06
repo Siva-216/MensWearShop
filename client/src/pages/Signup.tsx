@@ -14,7 +14,7 @@ const Signup = () => {
   const { signup } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from || "/profile";
+  const from = location.state?.from || "/";
 
   const calculateStrength = (pass: string) => {
     let strength = 0;
