@@ -57,7 +57,13 @@ const ProductDetail = () => {
   const wishlisted = isInWishlist(product.id);
   const related = (allProducts || []).filter((p: any) => p.category === product.category && p.id !== product.id).slice(0, 4);
 
+  const isOutOfStock = product.stock <= 0;
+
   const handleAddToCart = () => {
+    if (isOutOfStock) {
+      toast.error("Sorry, this item is out of stock");
+      return;
+    }
     if (!selectedSize) {
       toast.error("Please select a size");
       return;
@@ -92,14 +98,25 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
           {/* Images */}
           <div className="space-y-4">
-            <div className="aspect-[3/4] bg-muted overflow-hidden">
-              <img src={product.images[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
+            <div className="aspect-[3/4] bg-muted overflow-hidden relative">
+              <img 
+                src={product.images[selectedImage]} 
+                alt={product.name} 
+                className={`w-full h-full object-cover transition-all duration-500 ${isOutOfStock ? 'grayscale opacity-60' : ''}`} 
+              />
+              {isOutOfStock && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                  <span className="bg-destructive text-destructive-foreground text-sm font-bold tracking-[0.2em] uppercase px-4 py-2 shadow-xl">
+                    Out of Stock
+                  </span>
+                </div>
+              )}
             </div>
             {product.images.length > 1 && (
               <div className="flex gap-3">
                 {product.images.map((img, i) => (
                   <button key={i} onClick={() => setSelectedImage(i)} className={`w-20 h-24 overflow-hidden border-2 transition-colors ${selectedImage === i ? "border-foreground" : "border-transparent hover:border-border"}`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt="" className={`w-full h-full object-cover ${isOutOfStock ? 'grayscale opacity-60' : ''}`} />
                   </button>
                 ))}
               </div>
@@ -108,30 +125,59 @@ const ProductDetail = () => {
 
           {/* Info */}
           <div className="lg:py-4">
-            <p className="text-xs font-body font-medium tracking-[0.15em] uppercase text-muted-foreground mb-2">{product.category}</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-body font-medium tracking-[0.15em] uppercase text-muted-foreground">{product.category}</p>
+              <div className={`text-[10px] font-bold tracking-[0.1em] uppercase px-2 py-0.5 rounded-sm ${
+                isOutOfStock ? 'bg-destructive/10 text-destructive' : 
+                product.stock < 10 ? 'bg-orange-100 text-orange-600' : 'bg-green-50 text-green-600'
+              }`}>
+                {isOutOfStock ? 'Sold Out' : product.stock < 10 ? `Only ${product.stock} Left` : 'In Stock'}
+              </div>
+            </div>
             <h1 className="font-display text-3xl lg:text-4xl font-bold mb-3">{product.name}</h1>
-            <p className="text-xl font-body font-semibold mb-6">${product.price}</p>
+            <div className="flex items-center gap-4 mb-6">
+              <p className="text-xl font-body font-semibold">${product.price}</p>
+              {product.discountPrice && (
+                <p className="text-base font-body text-muted-foreground line-through decoration-red-500/50">${product.discountPrice}</p>
+              )}
+            </div>
             <p className="text-sm font-body text-muted-foreground leading-relaxed mb-8">{product.description}</p>
 
             {/* Size selector */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-body font-semibold tracking-[0.15em] uppercase">Size</span>
-                <SizeGuideModal />
+            {!isOutOfStock && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-body font-semibold tracking-[0.15em] uppercase">Size</span>
+                  <SizeGuideModal />
+                </div>
+                <div className="flex gap-3">
+                  {product.sizes.map((size) => (
+                    <button key={size} onClick={() => setSelectedSize(size)} className={`w-12 h-12 text-sm font-body font-semibold border transition-all duration-200 ${selectedSize === size ? "bg-foreground text-background border-foreground" : "border-border text-foreground hover:border-foreground"}`}>
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-3">
-                {product.sizes.map((size) => (
-                  <button key={size} onClick={() => setSelectedSize(size)} className={`w-12 h-12 text-sm font-body font-semibold border transition-all duration-200 ${selectedSize === size ? "bg-foreground text-background border-foreground" : "border-border text-foreground hover:border-foreground"}`}>
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
 
             {/* Actions */}
             <div className="flex gap-3 mb-8">
-              <button onClick={handleAddToCart} className="flex-1 btn-hero flex items-center justify-center gap-2">
-                <ShoppingBag size={16} /> Add to Cart
+              <button 
+                onClick={handleAddToCart} 
+                disabled={isOutOfStock}
+                className={`flex-1 flex items-center justify-center gap-2 py-4 text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 ${
+                  isOutOfStock 
+                  ? 'bg-muted text-muted-foreground cursor-not-allowed border border-border' 
+                  : 'btn-hero'
+                }`}
+              >
+                {isOutOfStock ? (
+                  "Out of Stock"
+                ) : (
+                  <>
+                    <ShoppingBag size={16} /> Add to Cart
+                  </>
+                )}
               </button>
               <button onClick={handleWishlist} className={`w-14 h-14 border flex items-center justify-center transition-colors ${wishlisted ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"}`}>
                 <Heart size={18} className={wishlisted ? "fill-current" : ""} />

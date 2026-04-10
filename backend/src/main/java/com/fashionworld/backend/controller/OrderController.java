@@ -39,6 +39,12 @@ public class OrderController {
         return new ResponseEntity<>(orders, HttpStatus.OK);
     }
 
+    @GetMapping("/staff/{staffId}")
+    public ResponseEntity<List<Order>> getOrdersByStaffId(@PathVariable String staffId) {
+        List<Order> orders = orderService.getOrdersByStaffId(staffId);
+        return new ResponseEntity<>(orders, HttpStatus.OK);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Order> getOrderById(@PathVariable String id) {
         Optional<Order> order = orderService.getOrderById(id);

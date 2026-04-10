@@ -77,6 +77,7 @@ const Checkout = () => {
         name: item.product.name,
         price: item.product.price,
         quantity: item.quantity,
+        size: item.size,
         image: item.product.images[0]
       })),
       shippingAddress: selectedAddress ? {

@@ -30,6 +30,7 @@ import AdminOrders from "./pages/Admin/Orders";
 import AdminReviews from "./pages/Admin/Reviews";
 import AdminAnalytics from "./pages/Admin/Analytics";
 import AdminSettings from "./pages/Admin/Settings";
+import AdminPOS from "./pages/Admin/POS";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import { AuthProvider, useAuth } from "@/context/AuthContext";
@@ -105,6 +106,7 @@ const AppContent = () => {
                   <Route path="reviews" element={<AdminReviews />} />
                   <Route path="analytics" element={<AdminAnalytics />} />
                   <Route path="settings" element={<AdminSettings />} />
+                  <Route path="pos" element={<AdminPOS />} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>

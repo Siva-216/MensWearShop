@@ -14,10 +14,19 @@ import {
   User,
   LogOut,
   Menu,
-  X
+  X,
+  Monitor
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +42,7 @@ import { useNavigate } from 'react-router-dom';
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+  { icon: Monitor, label: 'POS (In-Store)', path: '/admin/pos' },
   { icon: Users, label: 'Users Management', path: '/admin/users' },
   { icon: Package, label: 'Products Management', path: '/admin/products' },
   { icon: Layers, label: 'Categories', path: '/admin/categories' },

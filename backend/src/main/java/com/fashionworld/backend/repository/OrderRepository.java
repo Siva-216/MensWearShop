@@ -17,4 +17,7 @@ public interface OrderRepository extends MongoRepository<Order, String> {
     // Fetch a single order by its user-facing orderId string (e.g., ORD-XXXXXXXX)
     Optional<Order> findByOrderId(String orderId);
 
+    // Fetch all offline orders processed by a specific staff member
+    List<Order> findByStaffId(String staffId);
+
 }

@@ -104,7 +104,13 @@ export const api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then(res => res.json()),
+    }).then(async res => {
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `Server error (${res.status})`);
+      }
+      return res.json();
+    }),
     updateStatus: (id: string, status: string) => fetch(`${BASE_URL}/orders/${id}/status?status=${status}`, {
       method: 'PUT',
       headers: getHeaders(),
@@ -124,5 +130,22 @@ export const api = {
       method: 'DELETE',
       headers: getHeaders(),
     }).then(res => res.ok),
+  },
+
+  // POS
+  pos: {
+    getAll: () => fetch(`${BASE_URL}/pos`, { headers: getHeaders() }).then(res => res.json()),
+    getByStaff: (staffId: string) => fetch(`${BASE_URL}/pos/staff/${staffId}`, { headers: getHeaders() }).then(res => res.json()),
+    create: (data: any) => fetch(`${BASE_URL}/pos`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    }).then(async res => {
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `Server error (${res.status})`);
+      }
+      return res.json();
+    }),
   }
 };

@@ -20,9 +20,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const [hovered, setHovered] = useState(false);
   const wishlisted = isInWishlist(product.id);
 
+  const isOutOfStock = product.stock <= 0;
+
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (isOutOfStock) {
+      toast.error("Sorry, this item is out of stock");
+      return;
+    }
+    
     addToCart(product, product.sizes[0] || "M");
     toast.success(`${product.name} added to cart`);
   };
@@ -56,21 +64,29 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <img
           src={hovered && product.images[1] ? product.images[1] : product.images[0]}
           alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+          className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${isOutOfStock ? 'grayscale opacity-60' : ''}`}
           loading="lazy"
         />
         
         {/* Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
-          {product.isNew && (
-            <span className="bg-foreground text-background text-[9px] font-bold tracking-[0.2em] uppercase px-3 py-1 animate-fade-in">
-              New
+          {isOutOfStock ? (
+            <span className="bg-destructive text-destructive-foreground text-[9px] font-bold tracking-[0.2em] uppercase px-3 py-1 animate-fade-in">
+              Out of Stock
             </span>
-          )}
-          {product.isSale && (
-            <span className="bg-red-600 text-white text-[9px] font-bold tracking-[0.2em] uppercase px-3 py-1 animate-fade-in">
-              Sale
-            </span>
+          ) : (
+            <>
+              {product.isNew && (
+                <span className="bg-foreground text-background text-[9px] font-bold tracking-[0.2em] uppercase px-3 py-1 animate-fade-in">
+                  New
+                </span>
+              )}
+              {product.isSale && (
+                <span className="bg-red-600 text-white text-[9px] font-bold tracking-[0.2em] uppercase px-3 py-1 animate-fade-in">
+                  Sale
+                </span>
+              )}
+            </>
           )}
         </div>
 
@@ -80,10 +96,21 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-10">
           <button 
             onClick={handleQuickAdd} 
-            className="w-full bg-background text-foreground text-[10px] font-body font-bold tracking-[0.2em] uppercase py-4 hover:bg-foreground hover:text-background transition-all duration-300 flex items-center justify-center gap-3 shadow-lg active:scale-95"
+            disabled={isOutOfStock}
+            className={`w-full text-[10px] font-body font-bold tracking-[0.2em] uppercase py-4 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg active:scale-95 ${
+              isOutOfStock 
+              ? 'bg-muted text-muted-foreground cursor-not-allowed' 
+              : 'bg-background text-foreground hover:bg-foreground hover:text-background'
+            }`}
           >
-            <ShoppingBag size={14} />
-            Quick Add
+            {isOutOfStock ? (
+              "Out of Stock"
+            ) : (
+              <>
+                <ShoppingBag size={14} />
+                Quick Add
+              </>
+            )}
           </button>
         </div>
 
