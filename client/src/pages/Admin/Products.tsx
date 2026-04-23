@@ -79,9 +79,12 @@ const ProductsPage: React.FC = () => {
       product.id?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || product.categoryId === categoryFilter || product.categoryName === categoryFilter;
     let matchesPrice = true;
-    if (priceFilter === "low") matchesPrice = product.price < 50;
-    else if (priceFilter === "mid") matchesPrice = product.price >= 50 && product.price <= 200;
-    else if (priceFilter === "high") matchesPrice = product.price > 200;
+    const variantPrices = product.variants?.map((v: any) => v.price).filter((pr: number) => pr > 0) || [];
+    const effectivePrice = variantPrices.length > 0 ? Math.min(...variantPrices) : product.price;
+
+    if (priceFilter === "low") matchesPrice = effectivePrice < 1000;
+    else if (priceFilter === "mid") matchesPrice = effectivePrice >= 1000 && effectivePrice <= 5000;
+    else if (priceFilter === "high") matchesPrice = effectivePrice > 5000;
     let matchesStock = true;
     if (stockFilter === "instock") matchesStock = product.stock > 15;
     else if (stockFilter === "lowstock") matchesStock = product.stock > 0 && product.stock <= 15;
@@ -345,7 +348,7 @@ const ProductsPage: React.FC = () => {
             <div className="p-3 bg-red-100 text-red-600 rounded-xl"><DollarSign size={20} /></div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Inventory Value</p>
-              <p className="text-xl font-bold">${filteredProducts.reduce((acc: number, p: any) => acc + ((p.price || 0) * (p.stock || 0)), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-xl font-bold">₹{filteredProducts.reduce((acc: number, p: any) => acc + ((p.price || 0) * (p.stock || 0)), 0).toLocaleString('en-IN')}</p>
             </div>
           </CardContent>
         </Card>
@@ -392,9 +395,9 @@ const ProductsPage: React.FC = () => {
                   <DropdownMenuLabel>Price Range</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setPriceFilter('all')}>Any Price</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPriceFilter('low')}>Under $50</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPriceFilter('mid')}>$50 - $200</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPriceFilter('high')}>Over $200</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPriceFilter('low')}>Under ₹1,000</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPriceFilter('mid')}>₹1,000 - ₹5,000</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPriceFilter('high')}>Over ₹5,000</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -491,7 +494,7 @@ const ProductsPage: React.FC = () => {
                         {product.categoryName || 'Uncategorized'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-bold text-foreground">${product.price?.toFixed(2)}</TableCell>
+                    <TableCell className="font-bold text-foreground">₹{product.price?.toLocaleString('en-IN')}</TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1.5 w-32">
                         <div className="flex justify-between text-xs font-semibold">

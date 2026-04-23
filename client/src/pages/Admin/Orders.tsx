@@ -237,7 +237,7 @@ const OrdersPage: React.FC = () => {
                       {order.items?.length || 0} items
                     </div>
                   </TableCell>
-                  <TableCell className="font-bold text-foreground">${order.totalAmount?.toFixed(2)}</TableCell>
+                  <TableCell className="font-bold text-foreground">₹{order.totalAmount?.toLocaleString('en-IN')}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
                       <CreditCard size={14} className="text-foreground/40" />
@@ -359,8 +359,8 @@ const OrdersPage: React.FC = () => {
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-center font-bold text-muted-foreground">x{item.quantity}</TableCell>
-                                    <TableCell className="text-right font-medium text-muted-foreground">${item.price.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right pr-8 font-black text-foreground">${(item.price * item.quantity).toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-medium text-muted-foreground">₹{item.price.toLocaleString('en-IN')}</TableCell>
+                                    <TableCell className="text-right pr-8 font-black text-foreground">₹{(item.price * item.quantity).toLocaleString('en-IN')}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -441,25 +441,25 @@ const OrdersPage: React.FC = () => {
                     <div className="bg-muted/10 p-6 rounded-3xl space-y-4">
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-muted-foreground font-medium">Subtotal</span>
-                            <span className="font-bold text-foreground">${(selectedOrder.subTotal || selectedOrder.totalAmount).toFixed(2)}</span>
+                            <span className="font-bold text-foreground">₹{(selectedOrder.subTotal || selectedOrder.totalAmount).toLocaleString('en-IN')}</span>
                         </div>
                         {selectedOrder.tax > 0 && (
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground font-medium">Tax</span>
-                                <span className="font-bold text-foreground">+${selectedOrder.tax.toFixed(2)}</span>
+                                <span className="font-bold text-foreground">+₹{selectedOrder.tax.toLocaleString('en-IN')}</span>
                             </div>
                         )}
                         {selectedOrder.discount > 0 && (
                             <div className="flex justify-between items-center text-sm text-red-500">
                                 <span className="font-medium">Discount</span>
-                                <span className="font-bold">-${selectedOrder.discount.toFixed(2)}</span>
+                                <span className="font-bold">-₹{selectedOrder.discount.toLocaleString('en-IN')}</span>
                             </div>
                         )}
                         <Separator className="opacity-50" />
                         <div className="flex justify-between items-end pt-2">
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">Grand Total</span>
-                                <span className="text-3xl font-black tracking-tighter text-primary">${selectedOrder.totalAmount?.toFixed(2)}</span>
+                                <span className="text-3xl font-black tracking-tighter text-primary">₹{selectedOrder.totalAmount?.toLocaleString('en-IN')}</span>
                             </div>
                             <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none font-black text-[10px] mb-2 uppercase tracking-widest">PAID</Badge>
                         </div>
@@ -469,11 +469,11 @@ const OrdersPage: React.FC = () => {
                         <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10 space-y-3">
                              <div className="flex justify-between items-center text-xs">
                                 <span className="font-bold text-muted-foreground">CASH RECEIVED</span>
-                                <span className="font-black">${selectedOrder.cashReceived?.toFixed(2) || '0.00'}</span>
+                                <span className="font-black">₹{selectedOrder.cashReceived?.toLocaleString('en-IN') || '0'}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm text-primary">
                                 <span className="font-black uppercase tracking-widest text-[9px]">CHANGE GIVEAWAY</span>
-                                <span className="font-black">${selectedOrder.balanceReturned?.toFixed(2) || '0.00'}</span>
+                                <span className="font-black">₹{selectedOrder.balanceReturned?.toLocaleString('en-IN') || '0'}</span>
                             </div>
                         </div>
                     )}

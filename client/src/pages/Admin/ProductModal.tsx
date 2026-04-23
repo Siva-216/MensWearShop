@@ -210,11 +210,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
               <div className="grid grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="basePrice" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Base Price ($)</Label>
+                  <Label htmlFor="basePrice" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Base Price (₹)</Label>
                   <Input id="basePrice" type="number" step="0.01" {...register('basePrice', { required: true })} className="h-11 bg-muted/20 border-none" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="discountPrice" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Discount Price ($)</Label>
+                  <Label htmlFor="discountPrice" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Discount Price (₹)</Label>
                   <Input id="discountPrice" type="number" step="0.01" {...register('discountPrice')} className="h-11 bg-muted/20 border-none" />
                 </div>
                 <div className="space-y-2">

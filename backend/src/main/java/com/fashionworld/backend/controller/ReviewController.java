@@ -42,6 +42,12 @@ public class ReviewController {
         return new ResponseEntity<>(reviews, HttpStatus.OK);
     }
 
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<List<Review>> getReviewsByOrderId(@PathVariable String orderId) {
+        List<Review> reviews = reviewService.getReviewsByOrderId(orderId);
+        return new ResponseEntity<>(reviews, HttpStatus.OK);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Review> updateReview(@PathVariable String id, @RequestBody Review updatedReview) {
         Review result = reviewService.updateReview(id, updatedReview);

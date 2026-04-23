@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { User, Package, Settings as SettingsIcon, Heart, FileText, LogOut, Edit2, AlertCircle, MapPin, Phone, ShoppingBag, Cpu, Truck, CheckCircle, ChevronLeft, CreditCard, Plus } from "lucide-react";
+import { User, Package, Settings as SettingsIcon, Heart, FileText, LogOut, Edit2, AlertCircle, MapPin, Phone, ShoppingBag, Cpu, Truck, CheckCircle, ChevronLeft, CreditCard, Plus, Star } from "lucide-react";
 import Layout from "@/components/Layout";
+import ReviewModal from "@/components/ReviewModal";
 import { toast } from "sonner";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -92,7 +93,7 @@ const Profile = () => {
           {/* Right Content Area */}
           <div className="flex-1 min-w-0">
             {activeTab === "overview" && <OverviewTab user={user} wishlistCount={wishlist?.length || 0} />}
-            {activeTab === "orders" && <OrdersTab orders={user.orders} />}
+            {activeTab === "orders" && <OrdersTab orders={user.orders} user={user} />}
             {activeTab === "info" && <UserInfoTab storedUser={user} />}
             {activeTab === "settings" && <SettingsTab />}
           </div>
@@ -212,208 +213,233 @@ const OverviewTab = ({ user, wishlistCount }: { user: UserData; wishlistCount: n
   );
 };
 
-const OrdersTab = ({ orders }: { orders: any[] }) => {
+const OrdersTab = ({ orders, user }: { orders: any[]; user: any }) => {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [reviewProduct, setReviewProduct] = useState<any | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
-  if (selectedOrder) {
-    const steps = [
-      { id: 1, label: "Order Placed", icon: ShoppingBag, statusKey: "Order Placed" },
-      { id: 2, label: "Processing", icon: Cpu, statusKey: "Processing" },
-      { id: 3, label: "Out for Delivery", icon: Truck, statusKey: "Out for Delivery" },
-      { id: 4, label: "Delivered", icon: CheckCircle, statusKey: "Delivered" },
-    ];
+  const steps = [
+    { id: 1, label: "Order Placed", icon: ShoppingBag, statusKey: "Order Placed" },
+    { id: 2, label: "Processing", icon: Cpu, statusKey: "Processing" },
+    { id: 3, label: "Out for Delivery", icon: Truck, statusKey: "Out for Delivery" },
+    { id: 4, label: "Delivered", icon: CheckCircle, statusKey: "Delivered" },
+  ];
 
-    // Calculate the current step, with status string taking precedence for accurate UI
-    let currentStep = selectedOrder.trackingStep || 1;
-    const s = selectedOrder.status.toLowerCase();
-    
-    if (s.includes('delivered')) currentStep = 4;
-    else if (s.includes('delivery')) currentStep = 3;
-    else if (s.includes('processing')) currentStep = 2;
-    else if (s.includes('placed')) currentStep = 1;
-
-
-
-
-    return (
-      <div className="animate-fade-in space-y-8">
-        <button 
-          onClick={() => setSelectedOrder(null)}
-          className="flex items-center gap-2 text-xs font-body font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronLeft size={14} /> Back to History
-        </button>
-
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/30 p-6 border border-border">
-          <div>
-            <p className="text-[10px] font-body font-bold tracking-[0.2em] uppercase text-muted-foreground mb-1">Order ID</p>
-            <h2 className="font-display text-xl font-bold">{selectedOrder.id}</h2>
-          </div>
-          <div className="md:text-right">
-            <p className="text-[10px] font-body font-bold tracking-[0.2em] uppercase text-muted-foreground mb-1">Status</p>
-            <p className="font-body font-bold text-sm">{selectedOrder.status}</p>
-          </div>
-        </div>
-
-        {/* Tracking Progress */}
-        <div className="bg-card border border-border p-8 lg:p-12">
-          <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-8 md:gap-0">
-            {/* Progress line (desktop) */}
-            <div className="absolute top-[24px] left-0 w-full h-[1px] bg-border hidden md:block" />
-            
-            {steps.map((step, idx) => {
-              const Icon = step.icon;
-              const isActive = step.id <= currentStep;
-              
-              // Find date from statusHistory
-              const historyItem = selectedOrder.statusHistory?.find((h: any) => 
-                h.status.toLowerCase() === step.statusKey.toLowerCase()
-              );
-              const statusDate = historyItem?.date;
-              
-              return (
-                <div key={step.id} className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-0">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center border transition-all duration-500 ${
-                    isActive ? "bg-foreground border-foreground text-background scale-110 shadow-lg" : "bg-background border-border text-muted-foreground"
-                  }`}>
-                    <Icon size={20} />
-                  </div>
-                  <div className="md:absolute md:top-16 md:left-1/2 md:-translate-x-1/2 md:w-32 md:text-center text-left">
-                    <p className={`text-[10px] font-body font-bold tracking-widest uppercase transition-colors duration-500 ${
-                      isActive ? "text-foreground" : "text-muted-foreground"
-                    }`}>{step.label}</p>
-                    {statusDate && (
-                      <p className="text-[9px] font-body text-muted-foreground mt-1 whitespace-nowrap">
-                        {statusDate}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Order Details */}
-          <div className="space-y-6">
-            <h3 className="font-display text-lg font-bold border-b border-border pb-3">Order Items</h3>
-            <div className="space-y-4">
-              {Array.isArray(selectedOrder.items) ? (
-                selectedOrder.items.map((item: any, idx: number) => (
-                  <div key={idx} className="flex gap-4 p-4 border border-border/50 bg-card/50">
-                    <img src={item.image} alt={item.name} className="w-16 h-20 object-cover bg-muted" />
-                    <div className="flex-1">
-                      <p className="font-display font-medium text-sm">{item.name}</p>
-                      <p className="text-[10px] font-body text-muted-foreground uppercase tracking-wider mt-1">Qty: {item.quantity}</p>
-                      <p className="font-body font-bold text-sm mt-1">₹{item.price}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-4 border border-border/50 bg-card/50">
-                  <p className="text-sm font-body text-muted-foreground italic">Order contains {selectedOrder.items} items.</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="pt-6 border-t border-border flex justify-between items-center">
-              <span className="font-display font-bold uppercase tracking-widest text-xs text-muted-foreground">Amount Paid</span>
-              <span className="font-display font-bold text-2xl">₹{selectedOrder.total}</span>
-            </div>
-          </div>
-
-          {/* Delivery & Payment Info */}
-          <div className="space-y-10">
-            <section>
-              <h3 className="font-display text-lg font-bold border-b border-border pb-3 mb-6 flex items-center gap-2">
-                <MapPin size={18} /> Shipping Address
-              </h3>
-              {selectedOrder.address ? (
-                <div className="space-y-1">
-                  <p className="font-body font-bold text-base mb-2">{selectedOrder.address.name}</p>
-                  {selectedOrder.address.addressLines.map((line: string, i: number) => (
-                    <p key={i} className="text-sm font-body text-muted-foreground leading-relaxed">{line}</p>
-                  ))}
-                  <p className="text-sm font-body text-muted-foreground leading-relaxed">
-                    {selectedOrder.address.city}, {selectedOrder.address.state} {selectedOrder.address.zip}
-                  </p>
-                  <p className="text-sm font-body text-foreground font-medium flex items-center gap-2 mt-4 pt-4 border-t border-border/10">
-                    <Phone size={14} /> {selectedOrder.address.phone}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-sm font-body text-muted-foreground italic">Shipping information not available for this legacy order.</p>
-              )}
-            </section>
-
-            <section>
-              <h3 className="font-display text-lg font-bold border-b border-border pb-3 mb-6 flex items-center gap-2">
-                <CreditCard size={18} /> Payment & Billing
-              </h3>
-              <div className="bg-muted p-6 border border-border space-y-4">
-                <div>
-                  <p className="text-[10px] font-body font-bold tracking-widest uppercase text-muted-foreground mb-1">Payment Method</p>
-                  <p className="font-body font-bold text-sm tracking-wide">{selectedOrder.paymentMethod || "Cash on Delivery"}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-body font-bold tracking-widest uppercase text-muted-foreground mb-1">Payment Status</p>
-                  <p className="font-body font-bold text-sm tracking-wide text-orange-600">Pending on Delivery</p>
-                </div>
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const currentStep = selectedOrder ? (() => {
+    let step = selectedOrder.trackingStep || 1;
+    const s = (selectedOrder.status || 'Pending').toLowerCase();
+    if (s.includes('delivered') || s.includes('completed')) step = 4;
+    else if (s.includes('delivery') || s.includes('shipped')) step = 3;
+    else if (s.includes('processing')) step = 2;
+    else if (s.includes('placed') || s.includes('pending')) step = 1;
+    return step;
+  })() : 1;
 
   return (
     <div className="animate-fade-in">
-      <h2 className="font-display text-2xl font-bold mb-6">Order History</h2>
-      <div className="space-y-4">
-        {orders.length > 0 ? (
-          orders.map((order) => (
-            <div key={order.id} className="border border-border bg-card p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-foreground transition-all duration-300">
-              <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-xs font-body text-muted-foreground uppercase tracking-wider mb-1">Order ID</p>
-                  <p className="font-body font-bold text-sm">{order.id}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-body text-muted-foreground uppercase tracking-wider mb-1">Date</p>
-                  <p className="font-body font-medium text-sm">{order.date}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-body text-muted-foreground uppercase tracking-wider mb-1">Total</p>
-                  <p className="font-body font-medium text-sm">₹{order.total}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-body text-muted-foreground uppercase tracking-wider mb-1">Status</p>
-                  <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-sm ${
-                    order.status === 'Delivered' ? 'bg-green-100 text-green-700' : 
-                    order.status === 'Shipped' ? 'bg-indigo-100 text-indigo-700' :
-                    order.status === 'Processing' ? 'bg-blue-100 text-blue-700' :
-                    order.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                  }`}>
-                    {order.status}
-                  </span>
-                </div>
-              </div>
-              <button 
-                onClick={() => setSelectedOrder(order)}
-                className="shrink-0 btn-hero py-2 px-6 text-xs w-full md:w-auto text-center"
-              >
-                View Details
-              </button>
+      {selectedOrder ? (
+        <div className="space-y-8">
+          <button 
+            onClick={() => setSelectedOrder(null)}
+            className="flex items-center gap-2 text-xs font-body font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronLeft size={14} /> Back to History
+          </button>
+
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/30 p-6 border border-border">
+            <div>
+              <p className="text-[10px] font-body font-bold tracking-[0.2em] uppercase text-muted-foreground mb-1">Order ID</p>
+              <h2 className="font-display text-xl font-bold">{selectedOrder.id}</h2>
             </div>
-          ))
-        ) : (
-          <div className="text-center py-20 border border-dashed border-border">
-            <p className="text-muted-foreground font-body">You haven't placed any orders yet.</p>
+            <div className="md:text-right">
+              <p className="text-[10px] font-body font-bold tracking-[0.2em] uppercase text-muted-foreground mb-1">Status</p>
+              <p className="font-body font-bold text-sm">{selectedOrder.status}</p>
+            </div>
           </div>
-        )}
-      </div>
+
+          <div className="bg-card border border-border p-8">
+            <div className="flex flex-col md:flex-row justify-between gap-8 mb-12">
+              {steps.map((step, idx) => {
+                const Icon = step.icon;
+                const isActive = step.id <= currentStep;
+                
+                const historyItem = selectedOrder.statusHistory?.find((h: any) => 
+                  h.status?.toLowerCase() === step.statusKey?.toLowerCase()
+                );
+                const statusDate = historyItem?.date;
+                
+                return (
+                  <div key={step.id} className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-0">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center border transition-all duration-500 ${
+                      isActive ? "bg-foreground border-foreground text-background scale-110 shadow-lg" : "bg-background border-border text-muted-foreground"
+                    }`}>
+                      <Icon size={20} />
+                    </div>
+                    <div className="md:absolute md:top-16 md:left-1/2 md:-translate-x-1/2 md:w-32 md:text-center text-left">
+                      <p className={`text-[10px] font-body font-bold tracking-widest uppercase transition-colors duration-500 ${
+                        isActive ? "text-foreground" : "text-muted-foreground"
+                      }`}>{step.label}</p>
+                      {statusDate && (
+                        <p className="text-[9px] font-body text-muted-foreground mt-1 whitespace-nowrap">
+                          {statusDate}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <h3 className="font-display text-lg font-bold border-b border-border pb-3">Order Items</h3>
+              <div className="space-y-4">
+                {Array.isArray(selectedOrder.items) ? (
+                  selectedOrder.items.map((item: any, idx: number) => (
+                    <div key={idx} className="flex gap-4 p-4 border border-border/50 bg-card/50">
+                      <img src={item.image} alt={item.name} className="w-16 h-20 object-cover bg-muted" />
+                      <div className="flex-1">
+                        <p className="font-display font-medium text-sm">{item.name}</p>
+                        <p className="text-[10px] font-body text-muted-foreground uppercase tracking-wider mt-1">Qty: {item.quantity}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="font-body font-bold text-sm">₹{item.price}</p>
+                          {(selectedOrder.status?.toLowerCase() === 'delivered') && (
+                            <button 
+                              onClick={() => {
+                                setReviewProduct(item);
+                                setIsReviewModalOpen(true);
+                              }}
+                              className="flex items-center gap-1 text-[10px] font-bold text-foreground hover:text-yellow-500 transition-all group/rev"
+                            >
+                              <Star size={12} className="group-hover/rev:fill-yellow-400 transition-all" />
+                              <span className="underline underline-offset-4">Write Review</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 border border-border/50 bg-card/50">
+                    <p className="text-sm font-body text-muted-foreground italic">Order contains {selectedOrder.items} items.</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="pt-6 border-t border-border flex justify-between items-center">
+                <span className="font-display font-bold uppercase tracking-widest text-xs text-muted-foreground">Amount Paid</span>
+                <span className="font-display font-bold text-2xl">₹{selectedOrder.total || 0}</span>
+              </div>
+            </div>
+
+            <div className="space-y-10">
+              <section>
+                <h3 className="font-display text-lg font-bold border-b border-border pb-3 mb-6 flex items-center gap-2">
+                  <MapPin size={18} /> Shipping Address
+                </h3>
+                {selectedOrder.address ? (
+                  <div className="space-y-1">
+                    <p className="font-body font-bold text-base mb-2">{selectedOrder.address.name}</p>
+                    {selectedOrder.address.addressLines?.map((line: string, i: number) => (
+                      <p key={i} className="text-sm font-body text-muted-foreground leading-relaxed">{line}</p>
+                    ))}
+                    <p className="text-sm font-body text-muted-foreground leading-relaxed">
+                      {selectedOrder.address.city}, {selectedOrder.address.state} {selectedOrder.address.zip}
+                    </p>
+                    <p className="text-sm font-body text-foreground font-medium flex items-center gap-2 mt-4 pt-4 border-t border-border/10">
+                      <Phone size={14} /> {selectedOrder.address.phone}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm font-body text-muted-foreground italic">Shipping information not applicable for this order (e.g., In-Store/Offline purchase).</p>
+                )}
+              </section>
+
+              <section>
+                <h3 className="font-display text-lg font-bold border-b border-border pb-3 mb-6 flex items-center gap-2">
+                  <CreditCard size={18} /> Payment & Billing
+                </h3>
+                <div className="bg-muted p-6 border border-border space-y-4">
+                  <div>
+                    <p className="text-[10px] font-body font-bold tracking-widest uppercase text-muted-foreground mb-1">Payment Method</p>
+                    <p className="font-body font-bold text-sm tracking-wide">{selectedOrder.paymentMethod || "Cash on Delivery"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-body font-bold tracking-widest uppercase text-muted-foreground mb-1">Payment Status</p>
+                    <p className="font-body font-bold text-sm tracking-wide text-orange-600">Pending on Delivery</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <h2 className="font-display text-2xl font-bold mb-6">Order History</h2>
+          <div className="space-y-4">
+            {orders.length > 0 ? (
+              orders.map((order) => (
+                <div key={order.id} className="border border-border bg-card p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-foreground transition-all duration-300">
+                  <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-xs font-body text-muted-foreground uppercase tracking-wider mb-1">Order ID</p>
+                      <p className="font-body font-bold text-sm">{order.id}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-body text-muted-foreground uppercase tracking-wider mb-1">Date</p>
+                      <p className="font-body font-medium text-sm">{order.date}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-body text-muted-foreground uppercase tracking-wider mb-1">Total</p>
+                      <p className="font-body font-medium text-sm">₹{order.total}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-body text-muted-foreground uppercase tracking-wider mb-1">Status</p>
+                      <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-sm ${
+                        order.status === 'Delivered' ? 'bg-green-100 text-green-700' : 
+                        order.status === 'Shipped' ? 'bg-indigo-100 text-indigo-700' :
+                        order.status === 'Processing' ? 'bg-blue-100 text-blue-700' :
+                        order.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedOrder(order)}
+                    className="shrink-0 btn-hero py-2 px-6 text-xs w-full md:w-auto text-center"
+                  >
+                    View Details
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-20 border border-dashed border-border">
+                <p className="text-muted-foreground font-body">You haven't placed any orders yet.</p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {reviewProduct && (
+        <ReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          product={{
+            id: reviewProduct.id,
+            name: reviewProduct.name,
+            image: reviewProduct.image
+          }}
+          orderId={selectedOrder?.id || selectedOrder?.orderId}
+          userId={user.id || user._id}
+          userName={user.fullName || user.name}
+          onSuccess={() => {
+            // Success logic
+          }}
+        />
+      )}
     </div>
   );
 };

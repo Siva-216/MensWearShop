@@ -132,9 +132,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
       <div className="space-y-1.5 animate-slide-up">
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-body font-bold tracking-[0.15em] uppercase text-muted-foreground">{product.brand}</p>
-          <div className="flex items-center gap-1">
-            <Star size={10} className="fill-yellow-400 text-yellow-400" />
-            <span className="text-[10px] font-bold font-body">{product.rating}</span>
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5">
+              <Star size={10} className="fill-yellow-400 text-yellow-400" />
+              <span className="text-[10px] font-bold font-body">{product.rating ? product.rating.toFixed(1) : "0.0"}</span>
+            </div>
+            <span className="text-[9px] font-body text-muted-foreground">({product.numReviews || 0})</span>
           </div>
         </div>
         

@@ -114,7 +114,7 @@ const Dashboard: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+            <div className="text-2xl font-bold">₹{totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
             <p className="text-xs text-green-600 flex items-center mt-1 font-medium">
               <ArrowUpRight size={14} className="mr-1" />
               +12.5% from last month
@@ -189,7 +189,7 @@ const Dashboard: React.FC = () => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#888888', fontSize: 12}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#888888', fontSize: 12}} tickFormatter={(value) => `$${value}`} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#888888', fontSize: 12}} tickFormatter={(value) => `₹${value}`} />
                 <Tooltip 
                   contentStyle={{backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
                 />
@@ -265,7 +265,7 @@ const Dashboard: React.FC = () => {
                   <TableCell className="font-medium">#{order.orderId?.substring(0, 8)}</TableCell>
                   <TableCell>{order.shippingAddress?.name || 'Customer'}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{order.items?.[0]?.productName || 'Multiple items'}{order.items?.length > 1 ? ` (+${order.items.length - 1})` : ''}</TableCell>
-                  <TableCell className="font-semibold">${order.totalAmount?.toFixed(2)}</TableCell>
+                  <TableCell className="font-semibold">₹{order.totalAmount?.toLocaleString('en-IN')}</TableCell>
                   <TableCell>
                     <Badge 
                       variant="secondary"

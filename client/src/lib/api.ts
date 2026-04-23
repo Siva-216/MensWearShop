@@ -135,6 +135,7 @@ export const api = {
   reviews: {
     getAll: () => fetch(`${BASE_URL}/reviews`).then(res => res.json()),
     getByProduct: (productId: string) => fetch(`${BASE_URL}/reviews/product/${productId}`).then(res => res.json()),
+    getByOrder: (orderId: string) => fetch(`${BASE_URL}/reviews/order/${orderId}`).then(res => res.json()),
     create: (data: any) => fetch(`${BASE_URL}/reviews`, {
       method: 'POST',
       headers: getHeaders(),

@@ -22,6 +22,8 @@ public class Review {
     
     private String productId;
     
+    private String orderId;
+    
     private String userId;
     
     private String userName;

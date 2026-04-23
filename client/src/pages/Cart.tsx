@@ -62,7 +62,7 @@ const Cart = () => {
                     <div className="hidden lg:block">
                       <p className="font-display text-sm font-medium">{item.product.name}</p>
                       <p className="text-xs font-body text-muted-foreground mb-1">
-                        ${item.price} {item.color && `· ${item.color}`}
+                        ₹{item.price.toLocaleString()} {item.color && `· ${item.color}`}
                       </p>
                       {isOutOfStock ? (
                         <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">Out of Stock</p>
@@ -79,7 +79,7 @@ const Cart = () => {
                         <p className="text-[10px] font-body text-muted-foreground uppercase tracking-widest mt-1">
                           Size {item.size} {item.color && `· ${item.color}`}
                         </p>
-                        <p className="text-sm font-body font-bold mt-2">${item.price}</p>
+                        <p className="text-sm font-body font-bold mt-2">₹{item.price.toLocaleString()}</p>
                         {isOutOfStock ? (
                           <p className="text-[10px] font-bold text-destructive uppercase tracking-widest mt-1 font-body">Out of Stock</p>
                         ) : isInsufficient ? (
@@ -101,7 +101,7 @@ const Cart = () => {
                           <Plus size={12} />
                         </button>
                       </div>
-                      <p className="text-sm font-body font-bold">${(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="text-sm font-body font-bold">₹{(item.price * item.quantity).toLocaleString()}</p>
                     </div>
                   </div>
                   <span className="hidden lg:block text-sm font-body">{item.size}</span>
@@ -117,7 +117,7 @@ const Cart = () => {
                       <Plus size={12} />
                     </button>
                   </div>
-                  <span className="hidden lg:block text-sm font-body font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="hidden lg:block text-sm font-body font-semibold">₹{(item.price * item.quantity).toLocaleString()}</span>
                   <button onClick={() => removeFromCart(item.product.id, item.size, item.color)} className="hidden lg:flex p-1 text-muted-foreground hover:text-foreground transition-colors"><X size={16} /></button>
                 </div>
 
@@ -130,10 +130,10 @@ const Cart = () => {
             <div className="bg-muted p-6 lg:p-8 shadow-sm">
               <h2 className="font-display text-lg font-bold mb-6">Order Summary</h2>
               <div className="space-y-3 text-sm font-body">
-                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${subtotal}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>₹{subtotal.toLocaleString()}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>Free</span></div>
                 <div className="border-t border-border pt-3 flex justify-between font-semibold text-base">
-                  <span>Total</span><span>${subtotal}</span>
+                  <span>Total</span><span>₹{subtotal.toLocaleString()}</span>
                 </div>
               </div>
               

@@ -58,6 +58,12 @@ public class ProductController {
         return productService.updateProduct(id, productData);
     }
 
+    @PostMapping("/sync-ratings")
+    public ResponseEntity<Void> syncRatings() {
+        productService.syncAllProductRatings();
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProduct(@PathVariable String id) {
         productService.deleteProduct(id);

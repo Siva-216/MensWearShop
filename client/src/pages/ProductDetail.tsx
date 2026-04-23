@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import ProductCard from "@/components/ProductCard";
 import SizeGuideModal from "@/components/SizeGuideModal";
 import Layout from "@/components/Layout";
+import ReviewSection from "@/components/ReviewSection";
 import { toast } from "sonner";
 
 const ProductDetail = () => {
@@ -194,15 +195,14 @@ const ProductDetail = () => {
             </div>
             <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold mb-3 break-words leading-tight">{product.name}</h1>
             <div className="flex items-center gap-4 mb-6">
-              <p className="text-2xl font-body font-bold tracking-tight">
-                {currentPrice > 0 ? (
-                  `₹${currentPrice.toLocaleString()}`
-                ) : minPrice > 0 ? (
-                  `₹${minPrice.toLocaleString()} - ₹${maxPrice.toLocaleString()}`
-                ) : (
-                  `₹${product.price?.toLocaleString() || '0'}`
-                )}
-              </p>
+                <p className="font-display text-3xl font-bold tracking-tight text-foreground transition-all duration-300">
+                  {currentPrice > 0 ? 
+                    `₹${currentPrice.toLocaleString()}` : 
+                    minPrice === maxPrice ? 
+                    `₹${minPrice.toLocaleString()}` : 
+                    `₹${minPrice.toLocaleString()} - ₹${maxPrice.toLocaleString()}`
+                  }
+                </p>
               {(product.discountPrice || product.price > currentPrice) && (
                 <p className="text-base font-body text-muted-foreground line-through decoration-red-500/50">
                   ₹{(product.discountPrice || product.price).toLocaleString()}
@@ -342,6 +342,9 @@ const ProductDetail = () => {
           </div>
         </div>
 
+        {/* Reviews Section */}
+        <ReviewSection productId={product.id} />
+        
         {/* Complete the Look */}
         {related.length > 0 && (
           <section className="mt-20 mb-28 lg:mb-12">

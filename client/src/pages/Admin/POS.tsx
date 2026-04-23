@@ -31,10 +31,10 @@ import { useCart } from '@/context/CartContext';
 
 const sizes = ["S", "M", "L", "XL", "XXL", "7", "8", "9", "10", "OS"];
 const priceRanges = [
-  { label: "Under $50", min: 0, max: 50 },
-  { label: "$50 - $100", min: 50, max: 100 },
-  { label: "$100 - $500", min: 100, max: 500 },
-  { label: "Over $500", min: 500, max: Infinity },
+  { label: "Under ₹1,000", min: 0, max: 1000 },
+  { label: "₹1,000 - ₹2,000", min: 1000, max: 2000 },
+  { label: "₹2,000 - ₹5,000", min: 2000, max: 5000 },
+  { label: "Over ₹5,000", min: 5000, max: Infinity },
 ];
 
 const POSPage: React.FC = () => {
@@ -93,7 +93,10 @@ const POSPage: React.FC = () => {
       if (selectedRating !== null && (p.rating || 0) < selectedRating) return false;
       if (selectedPriceRange !== null) {
         const range = priceRanges[selectedPriceRange];
-        if (p.price < range.min || p.price >= range.max) return false;
+        const variantPrices = p.variants?.map((v: any) => v.price).filter((pr: number) => pr > 0) || [];
+        const effectivePrice = variantPrices.length > 0 ? Math.min(...variantPrices) : p.price;
+        
+        if (effectivePrice < range.min || effectivePrice >= range.max) return false;
       }
       return true;
     });
@@ -259,7 +262,7 @@ const POSPage: React.FC = () => {
                             <img src={item.product.images?.[0]} alt={item.product.name} className="w-16 h-20 md:w-16 md:h-20 object-cover bg-muted rounded-xl shrink-0" />
                             <div className="min-w-0 flex-1">
                               <p className="font-bold text-sm truncate">{item.product.name}</p>
-                              <p className="text-xs text-muted-foreground">${item.product.price}</p>
+                              <p className="text-xs text-muted-foreground">₹{item.product.price.toLocaleString('en-IN')}</p>
                               <div className="md:hidden mt-1 inline-flex items-center px-2 py-0.5 rounded bg-muted text-[10px] font-bold uppercase tracking-wider">Size {item.size}</div>
                             </div>
                           </div>
@@ -279,7 +282,7 @@ const POSPage: React.FC = () => {
 
                           <div className="flex items-center justify-between md:justify-start w-full md:w-auto mt-2 md:mt-0">
                             <span className="md:hidden text-xs font-bold text-muted-foreground uppercase opacity-50">Subtotal</span>
-                            <span className="text-sm font-black text-primary">${(item.product.price * item.quantity).toFixed(2)}</span>
+                            <span className="text-sm font-black text-primary">₹{(item.product.price * item.quantity).toLocaleString('en-IN')}</span>
                           </div>
 
                           <div className="w-full md:w-auto flex justify-end md:block mt-2 md:mt-0 border-t md:border-none pt-2 md:pt-0">
@@ -387,7 +390,7 @@ const POSPage: React.FC = () => {
                            <div className="w-full flex-1 space-y-4">
                               <h4 className="text-sm font-black uppercase tracking-widest opacity-60">Cash Received Amount</h4>
                               <div className="relative">
-                                 <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl md:text-3xl font-black opacity-10">$</span>
+                                 <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl md:text-3xl font-black opacity-10">₹</span>
                                  <Input 
                                    type="number"
                                    placeholder="0.00"
@@ -400,7 +403,7 @@ const POSPage: React.FC = () => {
                            {cashReceived >= finalTotal && (
                               <div className="w-full md:flex-1 bg-white p-5 md:p-6 rounded-xl md:rounded-2xl shadow-sm flex flex-col items-center">
                                  <span className="text-[10px] font-black opacity-50 uppercase tracking-widest mb-1">Balance to return</span>
-                                 <p className="text-3xl md:text-4xl font-black text-green-600">${(cashReceived - finalTotal).toFixed(2)}</p>
+                                 <p className="text-3xl md:text-4xl font-black text-green-600">₹{(cashReceived - finalTotal).toLocaleString('en-IN')}</p>
                               </div>
                            )}
                         </div>
@@ -417,16 +420,16 @@ const POSPage: React.FC = () => {
                 <div className="space-y-3 md:space-y-4 font-bold text-sm">
                    <div className="flex justify-between items-center opacity-60">
                       <span>Subtotal</span>
-                      <span>${subtotal.toFixed(2)}</span>
+                       <span>₹{subtotal.toLocaleString('en-IN')}</span>
                    </div>
                    <div className="flex justify-between items-center opacity-60">
                       <span>GST (Fixed 5%)</span>
-                      <span>+${tax.toFixed(2)}</span>
+                       <span>+₹{tax.toLocaleString('en-IN')}</span>
                    </div>
                    <div className="pt-4 md:pt-6 border-t border-[#f1f5f9] flex justify-between items-end">
                       <div className="flex flex-col">
                         <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest">Payable Total</span>
-                        <span className="text-3xl md:text-4xl font-black text-primary">${finalTotal.toFixed(2)}</span>
+                         <span className="text-3xl md:text-4xl font-black text-primary">₹{finalTotal.toLocaleString('en-IN')}</span>
                       </div>
                    </div>
                 </div>
@@ -567,7 +570,7 @@ const POSPage: React.FC = () => {
                       </div>
                       <h3 className="font-bold text-sm mb-3 group-hover:text-primary transition-colors truncate">{product.name}</h3>
                       <div className="mt-auto flex items-center justify-between">
-                        <p className="font-black text-base">${product.price.toFixed(2)}</p>
+                        <p className="font-black text-base">₹{product.price.toLocaleString('en-IN')}</p>
                         <div className="flex gap-1">
                            {product.sizes?.slice(0, 2).map((s: string) => <span key={s} className="text-[8px] border px-1 opacity-40 font-bold">{s}</span>)}
                            {product.sizes?.length > 2 && <span className="text-[8px] border px-1 opacity-40 font-bold">+{product.sizes.length - 2}</span>}

@@ -16,4 +16,7 @@ public interface ReviewRepository extends MongoRepository<Review, String> {
     // Fetch all reviews written by a specific user
     List<Review> findByUserId(String userId);
 
+    // Fetch all reviews for a specific order
+    List<Review> findByOrderId(String orderId);
+
 }

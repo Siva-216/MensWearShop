@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 
 import com.fashionworld.backend.model.Product;
 import com.fashionworld.backend.model.ProductVariant;
+import com.fashionworld.backend.model.Review;
 import com.fashionworld.backend.repository.ProductRepository;
+import com.fashionworld.backend.repository.ReviewRepository;
 
 @Service
 public class ProductService {
@@ -89,5 +91,54 @@ public class ProductService {
 
     public void deleteProduct(String id) {
         productRepository.deleteById(id);
+    }
+
+    public void updateProductRating(String productId, int rating, boolean isNewReview) {
+        productRepository.findById(productId).ifPresent(product -> {
+            int currentNumReviews = product.getNumReviews();
+            double currentRating = product.getRating();
+
+            if (isNewReview) {
+                double newRating = ((currentRating * currentNumReviews) + rating) / (currentNumReviews + 1);
+                product.setRating(newRating);
+                product.setNumReviews(currentNumReviews + 1);
+            } else {
+                // For updates or complex cases, just recalculate fully to be safe
+                recalculateProductRating(productId);
+                return;
+            }
+            productRepository.save(product);
+        });
+    }
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+
+    public void recalculateProductRating(String productId) {
+        List<com.fashionworld.backend.model.Review> reviews = reviewRepository.findByProductId(productId);
+        if (reviews.isEmpty()) {
+            productRepository.findById(productId).ifPresent(product -> {
+                product.setRating(0.0);
+                product.setNumReviews(0);
+                productRepository.save(product);
+            });
+            return;
+        }
+
+        double totalRating = reviews.stream().mapToInt(com.fashionworld.backend.model.Review::getRating).sum();
+        double averageRating = totalRating / reviews.size();
+
+        productRepository.findById(productId).ifPresent(product -> {
+            product.setRating(averageRating);
+            product.setNumReviews(reviews.size());
+            productRepository.save(product);
+        });
+    }
+
+    public void syncAllProductRatings() {
+        List<Product> products = productRepository.findAll();
+        for (Product product : products) {
+            recalculateProductRating(product.getId());
+        }
     }
 }

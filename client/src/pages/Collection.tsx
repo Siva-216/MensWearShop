@@ -8,10 +8,10 @@ import Layout from "@/components/Layout";
 
 const sizes = ["S", "M", "L", "XL", "XXL", "7", "8", "9", "10", "OS"];
 const priceRanges = [
-  { label: "Under $50", min: 0, max: 50 },
-  { label: "$50 - $100", min: 50, max: 100 },
-  { label: "$100 - $500", min: 100, max: 500 },
-  { label: "Over $500", min: 500, max: Infinity },
+  { label: "Under ₹1,000", min: 0, max: 1000 },
+  { label: "₹1,000 - ₹2,000", min: 1000, max: 2000 },
+  { label: "₹2,000 - ₹5,000", min: 2000, max: 5000 },
+  { label: "Over ₹5,000", min: 5000, max: Infinity },
 ];
 
 const Collection = () => {
@@ -45,9 +45,13 @@ const Collection = () => {
       if (selectedSizes.length && !p.sizes?.some((s: string) => selectedSizes.includes(s))) return false;
       if (selectedBrands.length && !selectedBrands.includes(p.brand)) return false;
       if (selectedRating !== null && (p.rating || 0) < selectedRating) return false;
+      
       if (selectedPriceRange !== null) {
         const range = priceRanges[selectedPriceRange];
-        if (p.price < range.min || p.price >= range.max) return false;
+        const variantPrices = p.variants?.map((v: any) => v.price).filter((pr: number) => pr > 0) || [];
+        const effectivePrice = variantPrices.length > 0 ? Math.min(...variantPrices) : p.price;
+        
+        if (effectivePrice < range.min || effectivePrice >= range.max) return false;
       }
       return true;
     });
@@ -70,6 +74,14 @@ const Collection = () => {
 
   const FilterSidebar = () => (
     <div className="space-y-10 pb-10">
+      {hasFilters && (
+        <button 
+          onClick={clearAll} 
+          className="w-full py-4 text-[10px] font-body font-bold tracking-[0.2em] uppercase border border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background transition-all duration-300"
+        >
+          Clear All Filters
+        </button>
+      )}
       {/* Category Filter */}
       <div>
         <h3 className="text-[11px] font-body font-bold tracking-[0.2em] uppercase mb-4 text-foreground/90">Category</h3>
@@ -116,7 +128,8 @@ const Collection = () => {
                 type="radio" 
                 name="price" 
                 checked={selectedPriceRange === i} 
-                onChange={() => setSelectedPriceRange(selectedPriceRange === i ? null : i)} 
+                onClick={() => setSelectedPriceRange(selectedPriceRange === i ? null : i)} 
+                onChange={() => {}}
                 className="w-4 h-4 border-border text-foreground focus:ring-0 focus:ring-offset-0 transition-all checked:bg-foreground appearance-none rounded-full border bg-transparent checked:border-[5px]" 
               />
               <span className="text-sm font-body text-muted-foreground group-hover:text-foreground transition-colors">{range.label}</span>
@@ -158,14 +171,7 @@ const Collection = () => {
         </div>
       </div>
 
-      {hasFilters && (
-        <button 
-          onClick={clearAll} 
-          className="w-full py-4 text-[10px] font-body font-bold tracking-[0.2em] uppercase border border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background transition-all duration-300"
-        >
-          Clear All Filters
-        </button>
-      )}
+
     </div>
   );
 

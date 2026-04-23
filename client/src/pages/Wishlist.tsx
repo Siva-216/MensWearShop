@@ -52,7 +52,7 @@ const Wishlist = () => {
                   <p className="text-xs font-body font-medium tracking-[0.1em] uppercase text-muted-foreground mb-1">{product.category}</p>
                   <h3 className="font-display text-base font-medium mb-1">{product.name}</h3>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-body font-semibold">${product.price}</p>
+                    <p className="text-sm font-body font-semibold">₹{product.price.toLocaleString()}</p>
                     {isOutOfStock && <span className="text-[10px] font-bold text-destructive uppercase tracking-widest">Sold Out</span>}
                   </div>
                 </Link>

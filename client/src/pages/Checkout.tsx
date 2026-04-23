@@ -344,7 +344,7 @@ const Checkout = () => {
                       <p className="text-[10px] font-body text-muted-foreground uppercase tracking-widest mt-1">
                         Size: {item.size} · Color: {item.color} · Qty: {item.quantity}
                       </p>
-                      <p className="text-sm font-body font-bold mt-2">${(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="text-sm font-body font-bold mt-2">₹{(item.price * item.quantity).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -353,7 +353,7 @@ const Checkout = () => {
               <div className="space-y-4 pt-6 border-t border-border/30">
                 <div className="flex justify-between text-sm font-body">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>${subtotal}</span>
+                  <span>₹{subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm font-body">
                   <span className="text-muted-foreground">Shipping</span>
@@ -361,7 +361,7 @@ const Checkout = () => {
                 </div>
                 <div className="flex justify-between font-display text-xl font-bold pt-4">
                   <span>Total</span>
-                  <span>${subtotal}</span>
+                  <span>₹{subtotal.toLocaleString()}</span>
                 </div>
               </div>
 

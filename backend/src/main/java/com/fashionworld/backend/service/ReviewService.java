@@ -19,20 +19,37 @@ public class ReviewService {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private ProductService productService;
+
     public Review createReview(Review review) {
-        // Step 1: Find all orders for this user
-        List<com.fashionworld.backend.model.Order> userOrders = orderRepository.findByUserId(review.getUserId());
+        // Step 1: Find the specific order if orderId is provided, or check any delivered order for this product
+        boolean hasPurchasedAndReceived = false;
         
-        // Step 2: Check if any order is "Delivered" and contains the productId
-        boolean hasPurchasedAndReceived = userOrders.stream()
-                .filter(order -> "Delivered".equalsIgnoreCase(order.getStatus()))
-                .anyMatch(order -> order.getItems().stream()
-                        .anyMatch(item -> item.getId().equals(review.getProductId())));
+        if (review.getOrderId() != null && !review.getOrderId().isEmpty()) {
+            Optional<com.fashionworld.backend.model.Order> orderOpt = orderRepository.findById(review.getOrderId());
+            if (orderOpt.isPresent()) {
+                com.fashionworld.backend.model.Order order = orderOpt.get();
+                if ("Delivered".equalsIgnoreCase(order.getStatus())) {
+                    hasPurchasedAndReceived = order.getItems().stream()
+                            .anyMatch(item -> item.getId().equals(review.getProductId()));
+                }
+            }
+        } else {
+            // Fallback to checking any delivered order for this user and product
+            List<com.fashionworld.backend.model.Order> userOrders = orderRepository.findByUserId(review.getUserId());
+            hasPurchasedAndReceived = userOrders.stream()
+                    .filter(order -> "Delivered".equalsIgnoreCase(order.getStatus()))
+                    .anyMatch(order -> order.getItems().stream()
+                            .anyMatch(item -> item.getId().equals(review.getProductId())));
+        }
 
         if (hasPurchasedAndReceived) {
-            return reviewRepository.save(review);
+            Review savedReview = reviewRepository.save(review);
+            // Update product rating
+            productService.updateProductRating(review.getProductId(), review.getRating(), true);
+            return savedReview;
         } else {
-            // Throwing a runtime exception for simplicity; in a real app, use a custom Exception
             throw new RuntimeException("You can only review products that have been delivered to you.");
         }
     }
@@ -43,6 +60,10 @@ public class ReviewService {
 
     public List<Review> getReviewsByUserId(String userId) {
         return reviewRepository.findByUserId(userId);
+    }
+
+    public List<Review> getReviewsByOrderId(String orderId) {
+        return reviewRepository.findByOrderId(orderId);
     }
 
     public Optional<Review> getReviewById(String id) {
