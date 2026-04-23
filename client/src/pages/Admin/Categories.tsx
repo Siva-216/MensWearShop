@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -37,14 +37,23 @@ const CategoriesPage: React.FC = () => {
     queryFn: () => api.products.getAll(),
   });
 
-  const getProductCount = (category: any) => {
-    if (!productsData) return 0;
-    return productsData.filter((p: any) => 
-      p.categoryId === category.id || 
-      p.categoryName === category.name || 
-      p.category === category.name
-    ).length;
-  };
+  // Pre-calculate product counts per category for performance
+  const categoryStats = useMemo(() => {
+    if (!productsData || !categoriesData) return {};
+    const stats: Record<string, number> = {};
+    
+    categoriesData.forEach((cat: any) => {
+      stats[cat.id] = productsData.filter((p: any) => 
+        p.categoryId === cat.id || 
+        p.categoryName === cat.name || 
+        p.category === cat.name
+      ).length;
+    });
+    
+    return stats;
+  }, [productsData, categoriesData]);
+
+  const getProductCount = (categoryId: string) => categoryStats[categoryId] || 0;
 
   const createMutation = useMutation({
     mutationFn: (data: any) => api.categories.create(data),
@@ -165,7 +174,7 @@ const CategoriesPage: React.FC = () => {
             <CardContent className="p-0 flex h-40">
               <div className="w-1/3 relative overflow-hidden">
                 <img 
-                  src={category.image || `https://source.unsplash.com/featured/?${category.name},fashion`} 
+                  src={(category.images && category.images[0]) || `https://source.unsplash.com/featured/?${category.name},fashion`} 
                   alt={category.name} 
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
                   onError={(ev: any) => {
@@ -189,17 +198,27 @@ const CategoriesPage: React.FC = () => {
                   </div>
                   <div className="flex flex-col gap-0.5">
                     <p className="text-xs text-muted-foreground font-mono">/{category.slug}</p>
-                    {category.parentId && (
-                      <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
-                        <FolderTree size={10} />
-                        Parent: {getParentName(category.parentId)}
+                    {category.description && (
+                      <p className="text-[10px] text-muted-foreground line-clamp-1 italic mt-1 bg-muted/30 px-2 py-0.5 rounded italic">
+                        "{category.description}"
                       </p>
                     )}
+                    <div className="flex items-center gap-2 mt-1">
+                      {category.parentId && (
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <FolderTree size={10} />
+                          {getParentName(category.parentId)}
+                        </p>
+                      )}
+                      <Badge variant="outline" className="text-[8px] h-4 px-1 border-primary/20 text-primary">
+                        P: {category.priority || 0}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-muted">
                   <div className="text-xs font-semibold text-muted-foreground">
-                    <span className="text-foreground text-sm mr-1">{getProductCount(category)}</span> Items
+                    <span className="text-foreground text-sm mr-1">{getProductCount(category.id)}</span> Items
                   </div>
                   <div className="flex gap-1">
                     <Button 
@@ -260,7 +279,7 @@ const CategoriesPage: React.FC = () => {
                     <div className="flex items-center justify-between p-4 rounded-xl bg-background/80 border border-muted-foreground/5 hover:border-primary/20 hover:shadow-md transition-all group cursor-pointer">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-lg text-primary overflow-hidden">
-                          {mainCat.image ? <img src={mainCat.image} className="w-full h-full object-cover" /> : mainCat.name?.charAt(0)}
+                          {(mainCat.images && mainCat.images[0]) ? <img src={mainCat.images[0]} className="w-full h-full object-cover" /> : mainCat.name?.charAt(0)}
                         </div>
                         <div>
                           <div className="font-bold text-base">{mainCat.name}</div>
@@ -269,7 +288,7 @@ const CategoriesPage: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right hidden sm:block">
-                          <div className="text-xs font-bold text-foreground">{getProductCount(mainCat)} Items total</div>
+                          <div className="text-xs font-bold text-foreground">{getProductCount(mainCat.id)} Items total</div>
                           <div className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">Structure</div>
                         </div>
                         <Button variant="ghost" size="icon" className="rounded-full" onClick={() => handleEdit(mainCat)}>

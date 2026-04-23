@@ -6,6 +6,20 @@ const getHeaders = () => {
   };
 };
 
+const handleResponse = async (res: Response) => {
+  if (!res.ok) {
+    const errorText = await res.text();
+    let errorData;
+    try {
+      errorData = JSON.parse(errorText);
+    } catch {
+      errorData = { message: errorText };
+    }
+    throw new Error(errorData.message || `Server error (${res.status})`);
+  }
+  return res.json();
+};
+
 export const api = {
   // Auth & Users
   auth: {
@@ -27,7 +41,7 @@ export const api = {
   },
 
   users: {
-    getAll: () => fetch(`${BASE_URL}/users`, { headers: getHeaders() }).then(res => res.json()),
+    getAll: () => fetch(`${BASE_URL}/users`, { headers: getHeaders() }).then(handleResponse),
     create: (data: any) => fetch(`${BASE_URL}/users/register`, {
       method: 'POST',
       headers: getHeaders(),
@@ -51,8 +65,8 @@ export const api = {
 
   // Products
   products: {
-    getAll: () => fetch(`${BASE_URL}/products`).then(res => res.json()).then((data: any[]) => data.map(p => ({ ...p, category: p.categoryName || p.category }))),
-    getById: (id: string) => fetch(`${BASE_URL}/products/${id}`).then(res => res.json()).then((p: any) => ({ ...p, category: p.categoryName || p.category })),
+    getAll: () => fetch(`${BASE_URL}/products`).then(handleResponse).then((data: any[]) => Array.isArray(data) ? data.map(p => ({ ...p, category: p.categoryName || p.category })) : []),
+    getById: (id: string) => fetch(`${BASE_URL}/products/${id}`).then(handleResponse).then((p: any) => ({ ...p, category: p.categoryName || p.category })),
     getByCategory: (categoryId: string) => fetch(`${BASE_URL}/products/category/${categoryId}`).then(res => res.json()).then((data: any[]) => data.map(p => ({ ...p, category: p.categoryName || p.category }))),
     create: (data: any) => fetch(`${BASE_URL}/products`, {
       method: 'POST',
@@ -98,7 +112,7 @@ export const api = {
 
   // Orders
   orders: {
-    getAll: () => fetch(`${BASE_URL}/orders`, { headers: getHeaders() }).then(res => res.json()),
+    getAll: () => fetch(`${BASE_URL}/orders`, { headers: getHeaders() }).then(handleResponse),
     getByUser: (userId: string) => fetch(`${BASE_URL}/orders/user/${userId}`, { headers: getHeaders() }).then(res => res.json()),
     create: (data: any) => fetch(`${BASE_URL}/orders`, {
       method: 'POST',
@@ -147,5 +161,21 @@ export const api = {
       }
       return res.json();
     }),
+  },
+
+  // File Upload
+  upload: {
+    image: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return fetch(`${BASE_URL}/upload`, {
+        method: 'POST',
+        // Note: browser will set Content-Type to multipart/form-data with boundary automatically
+        body: formData,
+      }).then(res => {
+        if (!res.ok) throw new Error('Upload failed');
+        return res.json();
+      });
+    }
   }
 };

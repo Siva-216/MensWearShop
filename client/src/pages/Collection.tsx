@@ -31,7 +31,7 @@ const Collection = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Derive available categories and brands from products
-  const categories = useMemo(() => Array.from(new Set((productsData || []).map((p: any) => p.category as string))).sort(), [productsData]);
+  const categories = useMemo(() => Array.from(new Set((productsData || []).map((p: any) => (p.categoryName || p.category) as string))).filter(Boolean).sort(), [productsData]);
   const brands = useMemo(() => Array.from(new Set((productsData || []).map((p: any) => p.brand as string))).sort(), [productsData]);
 
   const toggleFilter = (list: string[], setList: (val: string[]) => void, item: string) => {
@@ -40,7 +40,8 @@ const Collection = () => {
 
   const filtered = useMemo(() => {
     return (productsData || []).filter((p: any) => {
-      if (selectedCategories.length && !selectedCategories.includes(p.category)) return false;
+      const pCat = p.categoryName || p.category;
+      if (selectedCategories.length && !selectedCategories.includes(pCat)) return false;
       if (selectedSizes.length && !p.sizes?.some((s: string) => selectedSizes.includes(s))) return false;
       if (selectedBrands.length && !selectedBrands.includes(p.brand)) return false;
       if (selectedRating !== null && (p.rating || 0) < selectedRating) return false;
@@ -172,21 +173,21 @@ const Collection = () => {
     <Layout>
       <div className="container mx-auto px-4 lg:px-8 py-12 md:py-20 animate-fade-in">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-6">
           <div>
-            <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-4">
+            <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight mb-3">
               {selectedCategories.length === 1 ? selectedCategories[0] : "Collection"}
             </h1>
-            <p className="text-xs md:text-sm font-body text-muted-foreground uppercase tracking-widest">
-              Showing {filtered.length} of {(productsData || []).length} Products
+            <p className="text-[10px] md:text-sm font-body text-muted-foreground uppercase tracking-widest">
+              Showing {filtered.length} items
             </p>
           </div>
           <button 
             onClick={() => setFiltersOpen(!filtersOpen)} 
-            className="lg:hidden flex items-center justify-center gap-3 text-[10px] font-body font-bold tracking-[0.2em] uppercase border border-border px-6 py-3 hover:bg-muted transition-all active:scale-95"
+            className="lg:hidden flex items-center justify-center gap-3 text-[10px] font-body font-bold tracking-[0.2em] uppercase border border-border px-6 py-4 hover:bg-muted transition-all active:scale-95 bg-card sticky top-20 z-30 shadow-sm"
           >
             <SlidersHorizontal size={14} />
-            Filters
+            Filters & Sorting
           </button>
         </div>
 
@@ -199,10 +200,10 @@ const Collection = () => {
           {/* Mobile filter overlay */}
           {filtersOpen && (
             <div className="fixed inset-0 z-[100] lg:hidden">
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setFiltersOpen(false)} />
-              <div className="absolute right-0 top-0 bottom-0 w-[85%] max-w-sm bg-background p-8 overflow-y-auto animate-slide-in shadow-2xl">
-                <div className="flex items-center justify-between mb-10">
-                  <h2 className="font-display text-xl font-bold tracking-tight uppercase">Filters</h2>
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setFiltersOpen(false)} />
+              <div className="absolute right-0 top-0 bottom-0 w-[85%] max-w-sm bg-background p-6 md:p-8 overflow-y-auto shadow-2xl transition-all duration-500 ease-out">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="font-display text-lg font-bold tracking-tight uppercase">Filters</h2>
                   <button onClick={() => setFiltersOpen(false)} className="p-2 hover:bg-muted rounded-full transition-colors">
                     <X size={20} />
                   </button>
@@ -215,7 +216,7 @@ const Collection = () => {
           {/* Product grid */}
           <div className="flex-1">
             {filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-32 text-center">
+              <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center">
                 <div className="w-16 h-16 bg-muted flex items-center justify-center rounded-full mb-6">
                   <X size={24} className="text-muted-foreground" />
                 </div>
@@ -231,7 +232,7 @@ const Collection = () => {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10 lg:gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-4 md:gap-y-10 lg:gap-8">
                 {filtered.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

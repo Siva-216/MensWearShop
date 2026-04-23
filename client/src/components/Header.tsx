@@ -44,7 +44,7 @@ const Header = () => {
           </button>
 
           {/* Logo */}
-          <Link to="/" className="font-display text-xl lg:text-2xl font-bold tracking-wider uppercase">
+          <Link to="/" className="font-display text-lg md:text-xl lg:text-2xl font-bold tracking-wider uppercase truncate max-w-[150px] md:max-w-none">
             Fashion World
           </Link>
 

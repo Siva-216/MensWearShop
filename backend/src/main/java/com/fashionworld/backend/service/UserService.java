@@ -50,7 +50,9 @@ public class UserService {
     }
 
     public User updateUser(String id, User updateData) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id)
+                .or(() -> userRepository.findByEmail(id))
+                .orElseThrow(() -> new RuntimeException("User not found: " + id));
 
         if (updateData.getName() != null) user.setName(updateData.getName());
         if (updateData.getEmail() != null) {
@@ -65,6 +67,7 @@ public class UserService {
             user.setPassword(passwordEncoder.encode(updateData.getPassword()));
         }
         if (updateData.getRole() != null) user.setRole(updateData.getRole());
+        if (updateData.getAddresses() != null) user.setAddresses(updateData.getAddresses());
 
         return userRepository.save(user);
     }

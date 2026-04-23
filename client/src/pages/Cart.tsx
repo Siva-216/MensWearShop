@@ -56,65 +56,71 @@ const Cart = () => {
               const isOutOfStock = itemStock <= 0;
 
               return (
-                <div key={`${item.product.id}-${item.size}`} className={`grid grid-cols-[80px_1fr] lg:grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 py-6 border-b border-border items-center ${isOutOfStock ? 'opacity-70 bg-destructive/5' : isInsufficient ? 'bg-orange-50/50' : ''}`}>
+                <div key={`${item.product.id}-${item.size}-${item.color}`} className={`grid grid-cols-[80px_1fr] lg:grid-cols-[2.5fr_1fr_1fr_1fr_auto] gap-4 py-6 border-b border-border items-center ${isOutOfStock ? 'opacity-70 bg-destructive/5' : isInsufficient ? 'bg-orange-50/50' : ''}`}>
                   <div className="flex items-center gap-4 col-span-1 lg:col-span-1">
                     <img src={item.product.images[0]} alt={item.product.name} className={`w-20 h-24 object-cover ${isOutOfStock ? 'grayscale' : ''}`} />
                     <div className="hidden lg:block">
                       <p className="font-display text-sm font-medium">{item.product.name}</p>
-                      <p className="text-xs font-body text-muted-foreground mb-1">${item.product.price}</p>
+                      <p className="text-xs font-body text-muted-foreground mb-1">
+                        ${item.price} {item.color && `· ${item.color}`}
+                      </p>
                       {isOutOfStock ? (
                         <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">Out of Stock</p>
                       ) : isInsufficient ? (
-                        <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Only {itemStock} Available</p>
+                        <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Insufficient Stock</p>
                       ) : null}
                     </div>
                   </div>
-                  <div className="lg:hidden">
-                    <p className="font-display text-sm font-medium">{item.product.name}</p>
-                    <p className="text-xs font-body text-muted-foreground mb-1">${item.product.price} · Size {item.size}</p>
-                    {isOutOfStock ? (
-                      <p className="text-[10px] font-bold text-destructive uppercase tracking-widest mb-2 font-body">Out of Stock</p>
-                    ) : isInsufficient ? (
-                      <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-2 font-body">Only {itemStock} Available</p>
-                    ) : null}
-                    <div className="flex items-center gap-2 mt-2">
-                      <button onClick={() => updateQuantity(item.product.id, item.size, item.quantity - 1)} className="w-7 h-7 border border-border flex items-center justify-center hover:bg-muted transition-colors"><Minus size={12} /></button>
-                      <span className="text-sm font-body w-6 text-center">{item.quantity}</span>
-                      <button 
-                        onClick={() => {
-                          if (item.quantity >= itemStock) {
-                            toast.error(`Only ${itemStock} items available in stock`);
-                            return;
-                          }
-                          updateQuantity(item.product.id, item.size, item.quantity + 1);
-                        }} 
-                        className="w-7 h-7 border border-border flex items-center justify-center hover:bg-muted transition-colors"
-                      >
-                        <Plus size={12} />
-                      </button>
+                  <div className="lg:hidden glass-card p-4 premium-shadow-sm mb-4">
+                    <div className="flex gap-4">
+                      <img src={item.product.images[0]} alt="" className="w-20 h-24 object-cover" />
+                      <div className="flex-1">
+                        <p className="font-display text-sm font-bold">{item.product.name}</p>
+                        <p className="text-[10px] font-body text-muted-foreground uppercase tracking-widest mt-1">
+                          Size {item.size} {item.color && `· ${item.color}`}
+                        </p>
+                        <p className="text-sm font-body font-bold mt-2">${item.price}</p>
+                        {isOutOfStock ? (
+                          <p className="text-[10px] font-bold text-destructive uppercase tracking-widest mt-1 font-body">Out of Stock</p>
+                        ) : isInsufficient ? (
+                          <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest mt-1 font-body">Insufficient Stock</p>
+                        ) : null}
+                      </div>
+                      <button onClick={() => removeFromCart(item.product.id, item.size, item.color)} className="p-1 text-muted-foreground"><X size={16} /></button>
                     </div>
-                    <p className="text-sm font-body font-semibold mt-2">${item.product.price * item.quantity}</p>
+                    <div className="flex items-center justify-between mt-4 border-t border-border/50 pt-4">
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => updateQuantity(item.product.id, item.size, item.color, item.quantity - 1)} className="w-8 h-8 border border-border flex items-center justify-center rounded-full hover:bg-muted"><Minus size={12} /></button>
+                        <span className="text-sm font-body font-bold w-4 text-center">{item.quantity}</span>
+                        <button 
+                          onClick={() => {
+                            updateQuantity(item.product.id, item.size, item.color, item.quantity + 1);
+                          }} 
+                          className="w-8 h-8 border border-border flex items-center justify-center rounded-full hover:bg-muted"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+                      <p className="text-sm font-body font-bold">${(item.price * item.quantity).toFixed(2)}</p>
+                    </div>
                   </div>
                   <span className="hidden lg:block text-sm font-body">{item.size}</span>
                   <div className="hidden lg:flex items-center gap-2">
-                    <button onClick={() => updateQuantity(item.product.id, item.size, item.quantity - 1)} className="w-8 h-8 border border-border flex items-center justify-center hover:bg-muted transition-colors"><Minus size={12} /></button>
+                    <button onClick={() => updateQuantity(item.product.id, item.size, item.color, item.quantity - 1)} className="w-8 h-8 border border-border flex items-center justify-center hover:bg-muted transition-colors"><Minus size={12} /></button>
                     <span className="text-sm font-body w-6 text-center">{item.quantity}</span>
                     <button 
                       onClick={() => {
-                        if (item.quantity >= itemStock) {
-                          toast.error(`Only ${itemStock} items available in stock`);
-                          return;
-                        }
-                        updateQuantity(item.product.id, item.size, item.quantity + 1);
+                        updateQuantity(item.product.id, item.size, item.color, item.quantity + 1);
                       }} 
                       className="w-8 h-8 border border-border flex items-center justify-center hover:bg-muted transition-colors"
                     >
                       <Plus size={12} />
                     </button>
                   </div>
-                  <span className="hidden lg:block text-sm font-body font-semibold">${item.product.price * item.quantity}</span>
-                  <button onClick={() => removeFromCart(item.product.id, item.size)} className="hidden lg:flex p-1 text-muted-foreground hover:text-foreground transition-colors"><X size={16} /></button>
+                  <span className="hidden lg:block text-sm font-body font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                  <button onClick={() => removeFromCart(item.product.id, item.size, item.color)} className="hidden lg:flex p-1 text-muted-foreground hover:text-foreground transition-colors"><X size={16} /></button>
                 </div>
+
               );
             })}
           </div>

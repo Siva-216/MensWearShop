@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { User, Package, Settings as SettingsIcon, Heart, FileText, LogOut, Edit2, AlertCircle, MapPin, Phone, ShoppingBag, Cpu, Truck, CheckCircle, ChevronLeft, CreditCard, Plus } from "lucide-react";
 import Layout from "@/components/Layout";
 import { toast } from "sonner";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { UserData } from "@/data/users";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
   const { items: wishlist } = useWishlist();
   
@@ -22,7 +23,16 @@ const Profile = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+      // Clear the state so it doesn't keep resetting on every render
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   if (!user) return null;
+
 
   const handleLogout = () => {
     logout();
@@ -148,7 +158,7 @@ const OverviewTab = ({ user, wishlistCount }: { user: UserData; wishlistCount: n
                     <p className="text-xs font-body text-muted-foreground">{order.date} · {typeof order.items === 'number' ? order.items : order.items.length} items</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-body font-bold text-sm mb-1">${order.total}</p>
+                    <p className="font-body font-bold text-sm mb-1">₹{order.total}</p>
                     <p className={`text-[10px] font-body font-bold tracking-widest uppercase ${
                       order.status === 'Delivered' ? 'text-green-600' : 'text-foreground'
                     }`}>{order.status}</p>
@@ -162,41 +172,42 @@ const OverviewTab = ({ user, wishlistCount }: { user: UserData; wishlistCount: n
             )}
           </div>
         </div>
-
-        {/* Saved Addresses */}
-        <div>
-          <h2 className="font-display text-xl font-bold mb-6 flex items-center gap-2">
-            <MapPin size={20} /> Saved Addresses
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {user.addresses.length > 0 ? (
-              user.addresses.map((addr) => (
-                <div key={addr.id} className="border border-border p-6 bg-card shadow-sm">
-                  <p className="text-xs font-body font-bold tracking-[0.15em] uppercase mb-3">{addr.label || addr.name}</p>
-                  <div className="space-y-1">
-                    {addr.addressLines.map((line, i) => (
-                      <p key={i} className="text-sm font-body text-muted-foreground leading-relaxed">{line}</p>
-                    ))}
-                    <p className="text-sm font-body text-muted-foreground leading-relaxed">
-                      {addr.city}, {addr.state} {addr.zip}
-                    </p>
-                    {addr.phone && (
-                      <p className="text-xs font-body text-muted-foreground leading-relaxed mt-2 flex items-center gap-1">
-                        <Phone size={10} /> {addr.phone}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full py-10 text-center border border-dashed border-border">
-                <p className="text-sm font-body text-muted-foreground">No addresses saved yet.</p>
-              </div>
-            )}
-          </div>
-        </div>
       </>
     )}
+
+    {/* Saved Addresses - Show for everyone (Admins are users too!) */}
+    <div>
+      <h2 className="font-display text-xl font-bold mb-6 flex items-center gap-2">
+        <MapPin size={20} /> Saved Addresses
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {user.addresses && user.addresses.length > 0 ? (
+          user.addresses.map((addr) => (
+            <div key={addr.id} className="border border-border p-6 bg-card shadow-sm">
+              <p className="text-xs font-body font-bold tracking-[0.15em] uppercase mb-3">{addr.label || addr.name}</p>
+              <div className="space-y-1">
+                {addr.addressLines.map((line, i) => (
+                  <p key={i} className="text-sm font-body text-muted-foreground leading-relaxed">{line}</p>
+                ))}
+                <p className="text-sm font-body text-muted-foreground leading-relaxed">
+                  {addr.city}, {addr.state} {addr.zip}
+                </p>
+                <p className="text-sm font-body text-muted-foreground leading-relaxed uppercase tracking-wider">{addr.country || 'India'}</p>
+                {addr.phone && (
+                  <p className="text-xs font-body text-muted-foreground leading-relaxed mt-2 flex items-center gap-1">
+                    <Phone size={10} /> {addr.phone}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full py-10 text-center border border-dashed border-border">
+            <p className="text-sm font-body text-muted-foreground">No addresses saved yet.</p>
+          </div>
+        )}
+      </div>
+    </div>
     </div>
   );
 };
@@ -206,13 +217,23 @@ const OrdersTab = ({ orders }: { orders: any[] }) => {
 
   if (selectedOrder) {
     const steps = [
-      { id: 1, label: "Order Placed", icon: ShoppingBag },
-      { id: 2, label: "Processing", icon: Cpu },
-      { id: 3, label: "On the way", icon: Truck },
-      { id: 4, label: "Delivered", icon: CheckCircle },
+      { id: 1, label: "Order Placed", icon: ShoppingBag, statusKey: "Order Placed" },
+      { id: 2, label: "Processing", icon: Cpu, statusKey: "Processing" },
+      { id: 3, label: "Out for Delivery", icon: Truck, statusKey: "Out for Delivery" },
+      { id: 4, label: "Delivered", icon: CheckCircle, statusKey: "Delivered" },
     ];
 
-    const currentStep = selectedOrder.trackingStep || (selectedOrder.status === 'Delivered' ? 4 : 1);
+    // Calculate the current step, with status string taking precedence for accurate UI
+    let currentStep = selectedOrder.trackingStep || 1;
+    const s = selectedOrder.status.toLowerCase();
+    
+    if (s.includes('delivered')) currentStep = 4;
+    else if (s.includes('delivery')) currentStep = 3;
+    else if (s.includes('processing')) currentStep = 2;
+    else if (s.includes('placed')) currentStep = 1;
+
+
+
 
     return (
       <div className="animate-fade-in space-y-8">
@@ -229,8 +250,8 @@ const OrdersTab = ({ orders }: { orders: any[] }) => {
             <h2 className="font-display text-xl font-bold">{selectedOrder.id}</h2>
           </div>
           <div className="md:text-right">
-            <p className="text-[10px] font-body font-bold tracking-[0.2em] uppercase text-muted-foreground mb-1">Estimated Delivery Date</p>
-            <p className="font-body font-bold text-sm">March 25, 2026</p>
+            <p className="text-[10px] font-body font-bold tracking-[0.2em] uppercase text-muted-foreground mb-1">Status</p>
+            <p className="font-body font-bold text-sm">{selectedOrder.status}</p>
           </div>
         </div>
 
@@ -244,6 +265,12 @@ const OrdersTab = ({ orders }: { orders: any[] }) => {
               const Icon = step.icon;
               const isActive = step.id <= currentStep;
               
+              // Find date from statusHistory
+              const historyItem = selectedOrder.statusHistory?.find((h: any) => 
+                h.status.toLowerCase() === step.statusKey.toLowerCase()
+              );
+              const statusDate = historyItem?.date;
+              
               return (
                 <div key={step.id} className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-0">
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center border transition-all duration-500 ${
@@ -255,7 +282,11 @@ const OrdersTab = ({ orders }: { orders: any[] }) => {
                     <p className={`text-[10px] font-body font-bold tracking-widest uppercase transition-colors duration-500 ${
                       isActive ? "text-foreground" : "text-muted-foreground"
                     }`}>{step.label}</p>
-                    {isActive && <p className="text-[9px] font-body text-muted-foreground mt-1 hidden md:block">{selectedOrder.date}</p>}
+                    {statusDate && (
+                      <p className="text-[9px] font-body text-muted-foreground mt-1 whitespace-nowrap">
+                        {statusDate}
+                      </p>
+                    )}
                   </div>
                 </div>
               );
@@ -275,7 +306,7 @@ const OrdersTab = ({ orders }: { orders: any[] }) => {
                     <div className="flex-1">
                       <p className="font-display font-medium text-sm">{item.name}</p>
                       <p className="text-[10px] font-body text-muted-foreground uppercase tracking-wider mt-1">Qty: {item.quantity}</p>
-                      <p className="font-body font-bold text-sm mt-1">${item.price}</p>
+                      <p className="font-body font-bold text-sm mt-1">₹{item.price}</p>
                     </div>
                   </div>
                 ))
@@ -288,7 +319,7 @@ const OrdersTab = ({ orders }: { orders: any[] }) => {
             
             <div className="pt-6 border-t border-border flex justify-between items-center">
               <span className="font-display font-bold uppercase tracking-widest text-xs text-muted-foreground">Amount Paid</span>
-              <span className="font-display font-bold text-2xl">${selectedOrder.total}</span>
+              <span className="font-display font-bold text-2xl">₹{selectedOrder.total}</span>
             </div>
           </div>
 
@@ -355,12 +386,13 @@ const OrdersTab = ({ orders }: { orders: any[] }) => {
                 </div>
                 <div>
                   <p className="text-xs font-body text-muted-foreground uppercase tracking-wider mb-1">Total</p>
-                  <p className="font-body font-medium text-sm">${order.total}</p>
+                  <p className="font-body font-medium text-sm">₹{order.total}</p>
                 </div>
                 <div>
                   <p className="text-xs font-body text-muted-foreground uppercase tracking-wider mb-1">Status</p>
                   <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-sm ${
                     order.status === 'Delivered' ? 'bg-green-100 text-green-700' : 
+                    order.status === 'Shipped' ? 'bg-indigo-100 text-indigo-700' :
                     order.status === 'Processing' ? 'bg-blue-100 text-blue-700' :
                     order.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
                   }`}>
@@ -422,14 +454,16 @@ const UserInfoTab = ({ storedUser }: { storedUser: UserData }) => {
   const handleAddAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
-    const name = (form.elements[0] as HTMLInputElement).value;
-    const street1 = (form.elements[1] as HTMLInputElement).value;
-    const street2 = (form.elements[2] as HTMLInputElement).value;
-    const city = (form.querySelector('#city') as HTMLInputElement).value;
-    const state = (form.querySelector('#state') as HTMLInputElement).value;
-    const zip = (form.querySelector('#zip') as HTMLInputElement).value;
-    const country = (form.querySelector('#country') as HTMLInputElement).value;
-    const phone = (form.querySelector('#phone') as HTMLInputElement).value;
+    const formData = new FormData(form);
+    
+    const name = formData.get('name') as string;
+    const street1 = formData.get('street1') as string;
+    const street2 = formData.get('street2') as string;
+    const city = formData.get('city') as string;
+    const state = formData.get('state') as string;
+    const zip = formData.get('zip') as string;
+    const country = formData.get('country') as string;
+    const phone = formData.get('phone') as string;
     
     const newAddress: any = {
       id: `addr-${Date.now()}`,
@@ -546,8 +580,8 @@ const UserInfoTab = ({ storedUser }: { storedUser: UserData }) => {
         </div>
       </div>
 
-      {/* Saved Addresses Section - Hide for Admin */}
-      {!isAdmin && (
+      {/* Saved Addresses Section */}
+      {true && (
         <div className="pt-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-4 border-b border-border/50">
             <h2 className="font-display text-3xl font-bold">Saved Addresses</h2>
@@ -568,38 +602,38 @@ const UserInfoTab = ({ storedUser }: { storedUser: UserData }) => {
               
               <div>
                 <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Recipient Name</label>
-                <input type="text" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" placeholder="Full Name" />
+                <input type="text" name="name" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" placeholder="Full Name" />
               </div>
 
               <div>
                 <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Street Address</label>
-                <input type="text" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm mb-3" placeholder="Line 1" />
-                <input type="text" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" placeholder="Line 2 (Optional)" />
+                <input type="text" name="street1" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm mb-3" placeholder="Line 1" />
+                <input type="text" name="street2" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" placeholder="Line 2 (Optional)" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">City</label>
-                  <input type="text" required id="city" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+                  <input type="text" name="city" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">State</label>
-                  <input type="text" required id="state" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+                  <input type="text" name="state" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Zip Code</label>
-                  <input type="text" required id="zip" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+                  <input type="text" name="zip" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Country</label>
-                  <input type="text" required id="country" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+                  <input type="text" name="country" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" placeholder="India" />
                 </div>
                 <div>
                   <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Contact Number</label>
-                  <input type="tel" required id="phone" className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+                  <input type="tel" name="phone" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
                 </div>
               </div>
 
@@ -610,37 +644,52 @@ const UserInfoTab = ({ storedUser }: { storedUser: UserData }) => {
             </form>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {addresses.map((addr) => (
-                <div key={addr.id} className={`p-6 border transition-all duration-300 relative ${addr.isDefault ? 'border-foreground bg-muted outline outline-1 outline-foreground/10' : 'border-border bg-card'}`}>
-                  {addr.isDefault && (
-                    <div className="absolute -top-3 left-4 bg-foreground text-background text-[9px] font-bold tracking-widest uppercase px-2 py-1">DEFAULT</div>
-                  )}
-                  
-                  <p className="text-[10px] font-body font-bold tracking-[0.2em] uppercase text-muted-foreground mb-4">{addr.label || 'Address'}</p>
-                  <p className="font-display font-bold text-base mb-3">{addr.name}</p>
-                  
-                  <div className="space-y-1 mb-6">
-                    {addr.addressLines.map((line, idx) => (
-                      <p key={idx} className="text-sm font-body text-muted-foreground leading-relaxed">{line}</p>
-                    ))}
-                    <p className="text-sm font-body text-muted-foreground leading-relaxed">
-                      {addr.city}, {addr.state} {addr.zip}
-                    </p>
-                    {addr.phone && (
-                      <p className="text-xs font-body text-muted-foreground flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
-                        <Phone size={12} className="text-foreground" /> {addr.phone}
-                      </p>
+              {addresses && addresses.length > 0 ? (
+                addresses.map((addr) => (
+                  <div key={addr.id} className={`p-6 border transition-all duration-300 relative flex flex-col ${addr.isDefault ? 'border-foreground bg-muted outline outline-1 outline-foreground/10' : 'border-border bg-card shadow-sm hover:border-foreground/50'}`}>
+                    {addr.isDefault && (
+                      <div className="absolute -top-3 left-4 bg-foreground text-background text-[9px] font-bold tracking-widest uppercase px-2 py-1">DEFAULT</div>
                     )}
-                  </div>
+                    
+                    <div className="flex-1">
+                      <p className="text-[10px] font-body font-bold tracking-[0.2em] uppercase text-muted-foreground mb-4">{addr.label || 'Address'}</p>
+                      <p className="font-display font-bold text-base mb-3">{addr.name}</p>
+                      
+                      <div className="space-y-1 mb-6">
+                        {(addr.addressLines || []).map((line, idx) => (
+                          <p key={idx} className="text-sm font-body text-muted-foreground leading-relaxed">{line}</p>
+                        ))}
+                        <p className="text-sm font-body text-muted-foreground leading-relaxed">
+                          {addr.city}, {addr.state} {addr.zip}
+                        </p>
+                        <p className="text-sm font-body text-muted-foreground leading-relaxed uppercase tracking-wider">{addr.country || 'India'}</p>
+                        {addr.phone && (
+                          <p className="text-xs font-body text-muted-foreground flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
+                            <Phone size={12} className="text-foreground" /> {addr.phone}
+                          </p>
+                        )}
+                      </div>
+                    </div>
 
-                  <div className="flex flex-wrap items-center gap-4 mt-auto">
-                    {!addr.isDefault && (
-                      <button onClick={() => handleSetDefault(addr.id)} className="text-[10px] font-bold font-body uppercase tracking-[0.15em] text-foreground hover:underline underline-offset-4">SET DEFAULT</button>
-                    )}
-                    <button onClick={() => handleRemoveAddress(addr.id)} className="text-[10px] font-bold font-body uppercase tracking-[0.15em] text-red-500 hover:bg-red-50 px-2 py-1 transition-colors border border-transparent hover:border-red-100">REMOVE</button>
+                    <div className="flex flex-wrap items-center gap-4 mt-6 pt-4 border-t border-border/20">
+                      {!addr.isDefault && (
+                        <button onClick={() => handleSetDefault(addr.id)} className="text-[10px] font-bold font-body uppercase tracking-[0.15em] text-foreground hover:underline underline-offset-4">SET DEFAULT</button>
+                      )}
+                      <button onClick={() => handleRemoveAddress(addr.id)} className="text-[10px] font-bold font-body uppercase tracking-[0.15em] text-red-500 hover:bg-red-50 p-1 transition-colors">REMOVE</button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full py-20 text-center border border-dashed border-border flex flex-col items-center justify-center gap-4">
+                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                    <MapPin size={20} className="text-muted-foreground" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-body font-bold text-foreground">No addresses saved yet</p>
+                    <p className="text-xs font-body text-muted-foreground">Add a delivery address to speed up your checkout process.</p>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>

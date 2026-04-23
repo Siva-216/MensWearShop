@@ -19,7 +19,9 @@ public class OrderItem {
     
     private String image;
     
-    // Optional (some products may not have size)
+    // Variant Info
+    private String sku;
     private String size;
+    private String color;
 
 }

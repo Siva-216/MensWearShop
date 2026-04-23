@@ -277,9 +277,12 @@ const OrdersPage: React.FC = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Placed')}>Update to Placed</DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Shipped')}>Update to Shipped</DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Delivered')}>Update to Delivered</DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Order Placed')}>Mark as Order Placed</DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Processing')}>Mark as Processing</DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Out for Delivery')}>Mark as Out for Delivery</DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Delivered')}>Mark as Delivered</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="gap-2 text-red-600" onClick={() => handleStatusUpdate(order.id, 'Cancelled')}>Cancel Order</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

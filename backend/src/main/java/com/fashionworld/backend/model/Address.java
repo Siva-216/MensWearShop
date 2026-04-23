@@ -16,7 +16,8 @@ public class Address {
     private List<String> addressLines;
     private String city;
     private String state;
-    private String zipCode;
+    private String zip;
+    private String country;
     private String phone;
     private String altPhone;
     private String label; // e.g., "Home", "Office"

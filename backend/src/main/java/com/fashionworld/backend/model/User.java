@@ -23,6 +23,9 @@ public class User {
 
     private List<Address> addresses;
 
-    private String createdAt;
-    private String updatedAt;
+    @org.springframework.data.annotation.CreatedDate
+    private java.util.Date createdAt;
+    
+    @org.springframework.data.annotation.LastModifiedDate
+    private java.util.Date updatedAt;
 }

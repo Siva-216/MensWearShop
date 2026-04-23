@@ -52,6 +52,8 @@ public class Order {
     private String status; // e.g., "Processing", "Shipped", "Delivered", "Cancelled", "Completed"
     
     private int trackingStep; // e.g., 2 (Processing), 3 (Shipped), etc.
+    
+    private List<StatusUpdate> statusHistory;
 
     @CreatedDate
     private Date createdAt;

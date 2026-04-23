@@ -46,13 +46,30 @@ public class PosTransactionService {
                         item.setImage(product.getImages() != null && !product.getImages().isEmpty() ? product.getImages().get(0) : "");
                     }
                     
-                    // Update Stock
-                    int oldStock = product.getStock();
-                    int newStock = oldStock - item.getQuantity();
-                    product.setStock(newStock);
+                    // Update Stock at Variant Level
+                    if (product.getVariants() != null) {
+                        for (com.fashionworld.backend.model.ProductVariant variant : product.getVariants()) {
+                            boolean isMatch = false;
+                            if (item.getSku() != null && !item.getSku().isEmpty() && variant.getSku() != null) {
+                                isMatch = item.getSku().equalsIgnoreCase(variant.getSku());
+                            } else if (item.getSize() != null && variant.getSize() != null && 
+                                       item.getSize().equalsIgnoreCase(variant.getSize())) {
+                                if (item.getColor() != null && variant.getColor() != null) {
+                                    isMatch = item.getColor().equalsIgnoreCase(variant.getColor());
+                                } else if (item.getColor() == null && variant.getColor() == null) {
+                                    isMatch = true;
+                                }
+                            }
+
+                            if (isMatch) {
+                                variant.setStock(variant.getStock() - item.getQuantity());
+                                break;
+                            }
+                        }
+                    }
                     productRepository.save(product);
                     
-                    System.out.println("POS Item: " + product.getName() + " | Price: " + currentPrice + " | Stock: " + oldStock + " -> " + product.getStock());
+                    System.out.println("POS Item: " + product.getName() + " | Price: " + currentPrice + " | SKU: " + item.getSku() + " updated.");
                     
                     subTotal += currentPrice * item.getQuantity();
                 } else {

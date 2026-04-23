@@ -59,39 +59,30 @@ const AppContent = () => {
       <ScrollToTop />
       <Routes>
         {/* Auth routes are always accessible */}
+        {/* Auth routes are always accessible */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {isAdmin ? (
+        {/* Routes accessible to everyone */}
+        <Route path="/" element={isAdmin ? <Navigate to="/admin" replace /> : <Index />} />
+        <Route path="/collections" element={isAdmin ? <Navigate to="/admin" replace /> : <TheCollections />} />
+        <Route path="/collection" element={isAdmin ? <Navigate to="/admin" replace /> : <Collection />} />
+        <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/track-order" element={<TrackOrder />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/profile" element={<Profile />} />
+
+        {/* User-only routes */}
+        {!isAdmin && (
           <>
-            {/* If admin, redirect root to admin dashboard */}
-            <Route path="/" element={<Navigate to="/admin" replace />} />
-            {/* Catch-all for regular routes -> redirect to admin */}
-            <Route path="/collections" element={<Navigate to="/admin" replace />} />
-            <Route path="/collection" element={<Navigate to="/admin" replace />} />
-            <Route path="/cart" element={<Navigate to="/admin" replace />} />
-            <Route path="/wishlist" element={<Navigate to="/admin" replace />} />
-            <Route path="/checkout" element={<Navigate to="/admin" replace />} />
-            <Route path="/profile" element={<Profile />} />
-          </>
-        ) : (
-          <>
-            {/* Regular User Routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/collections" element={<TheCollections />} />
-            <Route path="/collection" element={<Collection />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/wishlist" element={<Wishlist />} />
-            <Route path="/track-order" element={<TrackOrder />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/profile" element={<Profile />} />
             <Route path="/checkout" element={<Checkout />} />
           </>
         )}
 
-        {/* Admin Routes (Keep protected in case guest tries to access) */}
+        {/* Admin-only routes */}
         <Route 
           path="/admin/*" 
           element={
@@ -115,6 +106,7 @@ const AppContent = () => {
         
         <Route path="*" element={<NotFound />} />
       </Routes>
+
     </BrowserRouter>
   );
 };

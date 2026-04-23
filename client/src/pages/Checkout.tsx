@@ -48,7 +48,7 @@ const Checkout = () => {
       toast.success("Order placed successfully!");
       clearCart();
       queryClient.invalidateQueries({ queryKey: ['orders'] });
-      navigate("/profile");
+      navigate("/profile", { state: { activeTab: "orders" } });
     },
     onError: (err: any) => {
       toast.error(err.message || "Something went wrong while placing order");
@@ -75,14 +75,16 @@ const Checkout = () => {
       items: items.map(item => ({
         id: item.product.id,
         name: item.product.name,
-        price: item.product.price,
+        price: item.price,
         quantity: item.quantity,
+        sku: item.sku,
         size: item.size,
+        color: item.color,
         image: item.product.images[0]
       })),
       shippingAddress: selectedAddress ? {
         ...selectedAddress,
-        zipCode: selectedAddress.zip // renaming to match backend zipCode
+        zipCode: selectedAddress.zip
       } : null,
       totalAmount: subtotal,
       paymentMethod: "Cash on Delivery",
@@ -335,12 +337,14 @@ const Checkout = () => {
               
               <div className="space-y-6 mb-8 max-h-[300px] overflow-y-auto pr-2">
                 {items.map((item) => (
-                  <div key={`${item.product.id}-${item.size}`} className="flex gap-4">
+                  <div key={`${item.product.id}-${item.size}-${item.color}`} className="flex gap-4">
                     <img src={item.product.images[0]} alt="" className="w-16 h-20 object-cover bg-background" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-display font-medium truncate">{item.product.name}</p>
-                      <p className="text-[10px] font-body text-muted-foreground uppercase tracking-widest mt-1">Size: {item.size} · Qty: {item.quantity}</p>
-                      <p className="text-sm font-body font-bold mt-2">${item.product.price * item.quantity}</p>
+                      <p className="text-[10px] font-body text-muted-foreground uppercase tracking-widest mt-1">
+                        Size: {item.size} · Color: {item.color} · Qty: {item.quantity}
+                      </p>
+                      <p className="text-sm font-body font-bold mt-2">${(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   </div>
                 ))}

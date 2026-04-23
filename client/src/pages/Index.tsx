@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Plus, Minus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -109,12 +109,32 @@ const CollectionBentoCard = ({ item, isLarge }: { item: typeof collectionLinks[0
 );
 
 const Home = () => {
-  const { data: allProducts, isLoading } = useQuery({
+  const { data: allProducts, isLoading: productsLoading } = useQuery({
     queryKey: ['products'],
     queryFn: () => api.products.getAll(),
   });
 
+  const { data: dbCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => api.categories.getAll(),
+  });
+
+  // Merge hardcoded links with dynamic category images
+  const dynamicCollections = useMemo(() => {
+    return collectionLinks.map(link => {
+      const match = dbCategories?.find((cat: any) => 
+        cat.name.toLowerCase() === link.category.toLowerCase()
+      );
+      
+      return {
+        ...link,
+        image: (match && match.images && match.images[0]) ? match.images[0] : link.image
+      };
+    });
+  }, [dbCategories]);
+
   const newArrivals = (allProducts || []).slice(0, 8);
+  const isLoading = productsLoading;
 
   return (
     <Layout>
@@ -150,35 +170,35 @@ const Home = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 lg:gap-8 overflow-hidden">
           {/* Row 1: Shirts & Basics */}
           <div className="md:col-span-8 md:row-span-2 group relative aspect-[16/10] md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={collectionLinks[0]} isLarge />
+            <CollectionBentoCard item={dynamicCollections[0]} isLarge />
           </div>
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={collectionLinks[1]} />
+            <CollectionBentoCard item={dynamicCollections[1]} />
           </div>
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={collectionLinks[2]} />
+            <CollectionBentoCard item={dynamicCollections[2]} />
           </div>
 
           {/* Row 2: Formal & Footwear (Mirrored) */}
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={collectionLinks[4]} />
+            <CollectionBentoCard item={dynamicCollections[4]} />
           </div>
           <div className="md:col-span-8 md:row-span-2 group relative aspect-[16/10] md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={collectionLinks[3]} isLarge />
+            <CollectionBentoCard item={dynamicCollections[3]} isLarge />
           </div>
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={collectionLinks[5]} />
+            <CollectionBentoCard item={dynamicCollections[5]} />
           </div>
 
           {/* Row 3: Lifestyle & Fragrance */}
           <div className="md:col-span-8 md:row-span-2 group relative aspect-[16/10] md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={collectionLinks[6]} isLarge />
+            <CollectionBentoCard item={dynamicCollections[6]} isLarge />
           </div>
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={collectionLinks[7]} />
+            <CollectionBentoCard item={dynamicCollections[7]} />
           </div>
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={collectionLinks[8]} />
+            <CollectionBentoCard item={dynamicCollections[8]} />
           </div>
         </div>
       </section>

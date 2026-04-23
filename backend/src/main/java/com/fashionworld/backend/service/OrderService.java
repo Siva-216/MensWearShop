@@ -7,7 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fashionworld.backend.model.Order;
+import com.fashionworld.backend.model.Product;
+import com.fashionworld.backend.model.ProductVariant;
 import com.fashionworld.backend.repository.OrderRepository;
+import com.fashionworld.backend.repository.ProductRepository;
+import com.fashionworld.backend.repository.UserRepository;
 
 @Service
 public class OrderService {
@@ -52,13 +56,31 @@ public class OrderService {
                         item.setImage(product.getImages() != null && !product.getImages().isEmpty() ? product.getImages().get(0) : "");
                     }
                     
-                    // Update Stock
-                    int oldStock = product.getStock();
-                    int newStock = oldStock - item.getQuantity();
-                    product.setStock(newStock); // We already checked that item.getQuantity() <= product.getStock()
+                    // Update Stock at Variant Level
+                    if (product.getVariants() != null) {
+                        for (ProductVariant variant : product.getVariants()) {
+                            boolean isMatch = false;
+                            if (item.getSku() != null && !item.getSku().isEmpty() && variant.getSku() != null) {
+                                isMatch = item.getSku().equalsIgnoreCase(variant.getSku());
+                            } else if (item.getSize() != null && variant.getSize() != null && 
+                                       item.getSize().equalsIgnoreCase(variant.getSize())) {
+                                // Fallback to size + color match if SKU is not provided or matched
+                                if (item.getColor() != null && variant.getColor() != null) {
+                                    isMatch = item.getColor().equalsIgnoreCase(variant.getColor());
+                                } else if (item.getColor() == null && variant.getColor() == null) {
+                                    isMatch = true;
+                                }
+                            }
+
+                            if (isMatch) {
+                                variant.setStock(variant.getStock() - item.getQuantity());
+                                break;
+                            }
+                        }
+                    }
                     productRepository.save(product);
                     
-                    System.out.println("Item: " + product.getName() + " | Price: " + currentPrice + " | Stock: " + oldStock + " -> " + product.getStock());
+                    System.out.println("Item: " + product.getName() + " | Price: " + currentPrice + " | SKU: " + item.getSku() + " updated in local variants.");
                     
                     subTotal += currentPrice * item.getQuantity();
                 } else {
@@ -73,6 +95,17 @@ public class OrderService {
              order.setTotalAmount(subTotal + order.getTax() - order.getDiscount());
         } else {
              order.setTotalAmount(subTotal);
+        }
+
+        // Initialize status history
+        java.util.List<com.fashionworld.backend.model.StatusUpdate> history = new java.util.ArrayList<>();
+        history.add(new com.fashionworld.backend.model.StatusUpdate("Order Placed", new java.util.Date()));
+        order.setStatusHistory(history);
+        if (order.getStatus() == null) {
+            order.setStatus("Order Placed");
+        }
+        if (order.getTrackingStep() == 0) {
+            order.setTrackingStep(1);
         }
 
         Order savedOrder = orderRepository.save(order);
@@ -128,12 +161,38 @@ public class OrderService {
                 if (order.getItems() != null) {
                     for (com.fashionworld.backend.model.OrderItem item : order.getItems()) {
                         productRepository.findById(item.getId()).ifPresent(product -> {
-                            product.setStock(product.getStock() + item.getQuantity());
+                            // Return stock to variant
+                            if (product.getVariants() != null) {
+                                for (ProductVariant variant : product.getVariants()) {
+                                    boolean isMatch = false;
+                                    if (item.getSku() != null && !item.getSku().isEmpty() && variant.getSku() != null) {
+                                        isMatch = item.getSku().equalsIgnoreCase(variant.getSku());
+                                    } else if (item.getSize() != null && variant.getSize() != null && 
+                                               item.getSize().equalsIgnoreCase(variant.getSize())) {
+                                        if (item.getColor() != null && variant.getColor() != null) {
+                                            isMatch = item.getColor().equalsIgnoreCase(variant.getColor());
+                                        } else if (item.getColor() == null && variant.getColor() == null) {
+                                            isMatch = true;
+                                        }
+                                    }
+                                    
+                                    if (isMatch) {
+                                        variant.setStock(variant.getStock() + item.getQuantity());
+                                        break;
+                                    }
+                                }
+                            }
                             productRepository.save(product);
                         });
                     }
                 }
             }
+            
+            // Append to status history
+            if (order.getStatusHistory() == null) {
+                order.setStatusHistory(new java.util.ArrayList<>());
+            }
+            order.getStatusHistory().add(new com.fashionworld.backend.model.StatusUpdate(status, new java.util.Date()));
 
             Order updatedOrder = orderRepository.save(order);
 

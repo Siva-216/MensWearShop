@@ -432,123 +432,125 @@ const ProductsPage: React.FC = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-muted/30">
-                <TableHead className="w-[80px] pl-6">Image</TableHead>
-                <TableHead className="font-bold text-foreground">Product Name</TableHead>
-                <TableHead className="font-bold text-foreground">Category</TableHead>
-                <TableHead className="font-bold text-foreground">Price</TableHead>
-                <TableHead className="font-bold text-foreground">Stock</TableHead>
-                <TableHead className="font-bold text-foreground">Status</TableHead>
-                <TableHead className="text-right pr-6">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground animate-pulse">
-                      <RefreshCw className="animate-spin" size={16} />
-                      Loading products...
-                    </div>
-                  </TableCell>
+        <CardContent className="p-0 overflow-x-auto scrollbar-hide">
+          <div className="min-w-[800px] lg:min-w-full">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-muted/30">
+                  <TableHead className="w-[80px] pl-6">Image</TableHead>
+                  <TableHead className="font-bold text-foreground">Product Name</TableHead>
+                  <TableHead className="font-bold text-foreground">Category</TableHead>
+                  <TableHead className="font-bold text-foreground">Price</TableHead>
+                  <TableHead className="font-bold text-foreground">Stock</TableHead>
+                  <TableHead className="font-bold text-foreground">Status</TableHead>
+                  <TableHead className="text-right pr-6">Actions</TableHead>
                 </TableRow>
-              ) : filteredProducts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-64 text-center">
-                    <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
-                      <Box size={40} className="opacity-20" />
-                      <p>No products found matching your filters</p>
-                      <Button variant="link" onClick={() => {
-                        setSearchTerm("");
-                        setCategoryFilter("all");
-                        setPriceFilter("all");
-                        setStockFilter("all");
-                      }}>Clear all filters</Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : filteredProducts.map((product: any) => (
-                <TableRow key={product.id} className="group border-muted/20 hover:bg-muted/5 transition-colors">
-                  <TableCell className="pl-6">
-                    <div className="h-12 w-12 rounded-lg overflow-hidden border bg-muted group-hover:scale-105 transition-transform">
-                      <img 
-                        src={product.images && product.images.length > 0 ? product.images[0] : 'https://placehold.co/200x200?text=No+Image'} 
-                        alt={product.name} 
-                        className="h-full w-full object-cover" 
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-semibold text-foreground">{product.name}</div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-widest font-bold">PID-{product.id?.substring(0, 8)}</div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="font-medium bg-muted/30 border-transparent text-muted-foreground capitalize">
-                      {product.categoryName || 'Uncategorized'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-bold text-foreground">${product.price?.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1.5 w-32">
-                      <div className="flex justify-between text-xs font-semibold">
-                        <span>{product.stock} units</span>
-                        <span className="text-muted-foreground">{Math.min(100, (product.stock / 150) * 100).toFixed(0)}%</span>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground animate-pulse">
+                        <RefreshCw className="animate-spin" size={16} />
+                        Loading products...
                       </div>
-                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-1000 ${
-                            product.stock === 0 ? 'bg-red-500 w-0' :
-                            product.stock < 15 ? 'bg-amber-500' :
-                            'bg-green-500'
-                          }`}
-                          style={{ width: `${Math.min(100, (product.stock / 150) * 100)}%` }}
-                        ></div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredProducts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-64 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                        <Box size={40} className="opacity-20" />
+                        <p>No products found matching your filters</p>
+                        <Button variant="link" onClick={() => {
+                          setSearchTerm("");
+                          setCategoryFilter("all");
+                          setPriceFilter("all");
+                          setStockFilter("all");
+                        }}>Clear all filters</Button>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      className={`${
-                        product.stock > 15 ? 'bg-green-100 text-green-700' :
-                        product.stock > 0 ? 'bg-amber-100 text-amber-700' :
-                        'bg-red-100 text-red-700'
-                      } border-none font-bold px-2 py-0.5 rounded text-[10px] uppercase`}
-                    >
-                      {product.stock > 15 ? 'In Stock' : product.stock > 0 ? 'Low Stock' : 'Out of Stock'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right pr-6">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" title="Update Stock" className="h-8 w-8 rounded-full hover:bg-blue-50 text-blue-600">
-                        <RefreshCw size={16} />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        title="Edit" 
-                        className="h-8 w-8 rounded-full hover:bg-amber-50 text-amber-600"
-                        onClick={() => handleEdit(product)}
+                    </TableCell>
+                  </TableRow>
+                ) : filteredProducts.map((product: any) => (
+                  <TableRow key={product.id} className="group border-muted/20 hover:bg-muted/5 transition-colors">
+                    <TableCell className="pl-6">
+                      <div className="h-12 w-12 rounded-lg overflow-hidden border bg-muted group-hover:scale-105 transition-transform">
+                        <img 
+                          src={product.images && product.images.length > 0 ? product.images[0] : 'https://placehold.co/200x200?text=No+Image'} 
+                          alt={product.name} 
+                          className="h-full w-full object-cover" 
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-foreground truncate max-w-[200px]">{product.name}</div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-widest font-bold">PID-{product.id?.substring(0, 8)}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-medium bg-muted/30 border-transparent text-muted-foreground capitalize">
+                        {product.categoryName || 'Uncategorized'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-bold text-foreground">${product.price?.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1.5 w-32">
+                        <div className="flex justify-between text-xs font-semibold">
+                          <span>{product.stock} units</span>
+                          <span className="text-muted-foreground">{Math.min(100, (product.stock / 150) * 100).toFixed(0)}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-1000 ${
+                              product.stock === 0 ? 'bg-red-500 w-0' :
+                              product.stock < 15 ? 'bg-amber-500' :
+                              'bg-green-500'
+                            }`}
+                            style={{ width: `${Math.min(100, (product.stock / 150) * 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        className={`${
+                          product.stock > 15 ? 'bg-green-100 text-green-700' :
+                          product.stock > 0 ? 'bg-amber-100 text-amber-700' :
+                          'bg-red-100 text-red-700'
+                        } border-none font-bold px-2 py-0.5 rounded text-[10px] uppercase`}
                       >
-                        <Edit2 size={16} />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        title="Delete" 
-                        className="h-8 w-8 rounded-full hover:bg-red-50 text-red-600"
-                        onClick={() => handleDelete(product.id)}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                        {product.stock > 15 ? 'In Stock' : product.stock > 0 ? 'Low Stock' : 'Out of Stock'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" title="Update Stock" className="h-8 w-8 rounded-full hover:bg-blue-50 text-blue-600">
+                          <RefreshCw size={16} />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          title="Edit" 
+                          className="h-8 w-8 rounded-full hover:bg-amber-50 text-amber-600"
+                          onClick={() => handleEdit(product)}
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          title="Delete" 
+                          className="h-8 w-8 rounded-full hover:bg-red-50 text-red-600"
+                          onClick={() => handleDelete(product.id)}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

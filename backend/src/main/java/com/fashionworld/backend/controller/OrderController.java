@@ -74,10 +74,12 @@ public class OrderController {
         int step = trackingStep;
         if (step == -1) {
             switch (status.toUpperCase()) {
+                case "ORDER PLACED": 
                 case "PLACED": step = 1; break;
-                case "SHIPPED": step = 2; break;
-                case "DELIVERED": step = 3; break;
-                case "CANCELLED": step = 4; break;
+                case "PROCESSING": step = 2; break;
+                case "OUT FOR DELIVERY": step = 3; break;
+                case "DELIVERED": step = 4; break;
+                case "CANCELLED": step = 5; break;
                 default: step = 1;
             }
         }

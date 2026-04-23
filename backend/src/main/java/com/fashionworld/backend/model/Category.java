@@ -22,8 +22,10 @@ public class Category {
 
     private String name;
     private String slug;
-    private String image;
+    private String description;
+    private java.util.List<String> images;
     private String parentId; // For hierarchy (null for top-level)
+    private int priority; // For sorting categories on UI
 
     @CreatedDate
     private Date createdAt;

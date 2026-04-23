@@ -19,9 +19,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper to map backend user object to frontend UserData interface
-  const mapUserFromBackend = (backendUser: any): UserData | null => {
+  // Helpers to map backend objects to frontend interfaces
+  const mapOrderFromBackend = (o: any) => {
+    if (!o) return null;
+    return {
+      id: o.orderId || o.id,
+      date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A',
+      total: o.totalAmount || o.subTotal || 0,
+      status: (o.status ? (o.status.charAt(0).toUpperCase() + o.status.slice(1).toLowerCase()) : 'Pending') as any,
+      items: Array.isArray(o.items) ? o.items.map((item: any) => ({
+        id: item.id || item.productId,
+        name: item.name || 'Product',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        image: item.image || '',
+        size: item.size,
+        color: item.color,
+        sku: item.sku
+      })) : (typeof o.items === 'number' ? o.items : 0),
+      address: o.shippingAddress,
+      paymentMethod: o.paymentMethod,
+      trackingStep: o.trackingStep,
+      statusHistory: Array.isArray(o.statusHistory) ? o.statusHistory.map((h: any) => ({
+        status: h.status,
+        date: h.date ? new Date(h.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'
+      })) : []
+    };
+  };
+
+  const mapUserFromBackend = (backendUser: any, backendOrders: any[] = []): UserData | null => {
     if (!backendUser) return null;
+    
+    // Use provided orders or fallback to backendUser.orders if exists
+    const ordersToMap = (backendOrders && backendOrders.length > 0) 
+      ? backendOrders 
+      : (backendUser.orders || []);
+
     return {
       id: backendUser.id,
       fullName: backendUser.name || backendUser.fullName || '',
@@ -29,8 +62,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       phone: backendUser.mobile || backendUser.phone || '',
       memberSince: backendUser.createdAt ? new Date(backendUser.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'April 2026',
       role: (backendUser.role || 'user').toLowerCase() as any,
-      orders: backendUser.orders || [],
-      addresses: backendUser.addresses || [],
+      orders: ordersToMap.map(mapOrderFromBackend).filter(Boolean),
+      addresses: (backendUser.addresses || []).map((addr: any) => ({
+        id: addr.id || addr._id || `addr-${Math.random().toString(36).substr(2, 9)}`,
+        name: addr.name || '',
+        addressLines: Array.isArray(addr.addressLines) ? addr.addressLines : [],
+        city: addr.city || '',
+        state: addr.state || '',
+        zip: addr.zip || addr.zipCode || '',
+        country: addr.country || 'India',
+        phone: addr.phone || '',
+        altPhone: addr.altPhone || '',
+        label: addr.label || 'Address',
+        isDefault: !!addr.isDefault
+      })),
       wishlistCount: backendUser.wishlistCount || 0
     };
   };
@@ -42,12 +87,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const userData = JSON.parse(storedUser);
           const profile = await api.auth.getProfile(userData.id); 
+          
           if (profile && !profile.error && profile.id) {
-            const mappedUser = mapUserFromBackend(profile);
+            // Fetch orders for this user
+            let orders: any[] = [];
+            try {
+              orders = await api.orders.getByUser(profile.id);
+              if (!Array.isArray(orders)) orders = [];
+            } catch (err) {
+              console.error("Failed to fetch orders during init:", err);
+            }
+
+            const mappedUser = mapUserFromBackend(profile, orders);
             setUser(mappedUser);
             localStorage.setItem('user', JSON.stringify(profile));
           } else {
-            setUser(mapUserFromBackend(userData));
+            // Even if profile fetch fails, try to fetch orders for the cached user
+            let orders: any[] = [];
+            try {
+              orders = await api.orders.getByUser(userData.id);
+              if (!Array.isArray(orders)) orders = [];
+            } catch (err) {
+              console.error("Failed to fetch orders for cached user:", err);
+            }
+            setUser(mapUserFromBackend(userData, orders));
           }
         } catch (error) {
           console.error("Auth initialization failed:", error);
@@ -63,8 +126,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await api.auth.login({ email, password });
       if (response && response.id) {
+        // Fetch orders immediately after login
+        let orders: any[] = [];
+        try {
+          orders = await api.orders.getByUser(response.id);
+          if (!Array.isArray(orders)) orders = [];
+        } catch (err) {
+          console.error("Failed to fetch orders during login:", err);
+        }
+
         localStorage.setItem('user', JSON.stringify(response));
-        setUser(mapUserFromBackend(response));
+        setUser(mapUserFromBackend(response, orders));
         return true;
       }
       return false;
@@ -106,7 +178,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const response = await api.users.update(updatedData.id, backendData);
       if (response && response.id) {
-        const mappedUser = mapUserFromBackend(response);
+        // Fetch orders to ensure they are preserved in the state
+        let orders: any[] = [];
+        try {
+          orders = await api.orders.getByUser(response.id);
+          if (!Array.isArray(orders)) orders = [];
+        } catch (err) {
+          console.error("Failed to fetch orders during update:", err);
+        }
+
+        const mappedUser = mapUserFromBackend(response, orders);
         setUser(mappedUser);
         localStorage.setItem('user', JSON.stringify(response));
         return true;

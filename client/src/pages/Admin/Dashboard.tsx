@@ -62,15 +62,15 @@ const Dashboard: React.FC = () => {
     queryFn: () => api.users.getAll(),
   });
 
-  const totalRevenue = orders
+  const totalRevenue = (Array.isArray(orders) ? orders : [])
     .filter((o: any) => o.status !== 'Cancelled')
     .reduce((acc: number, o: any) => acc + (o.totalAmount || 0), 0);
 
-  const recentOrders = [...orders]
+  const recentOrders = (Array.isArray(orders) ? [...orders] : [])
     .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
     .slice(0, 5);
 
-  const categoryData = products.reduce((acc: any, p: any) => {
+  const categoryData = (Array.isArray(products) ? products : []).reduce((acc: any, p: any) => {
     const cat = p.categoryName || 'Uncategorized';
     acc[cat] = (acc[cat] || 0) + 1;
     return acc;
@@ -130,10 +130,10 @@ const Dashboard: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.length}</div>
+            <div className="text-2xl font-bold">{Array.isArray(users) ? users.length : 0}</div>
             <p className="text-xs text-green-600 flex items-center mt-1 font-medium">
               <ArrowUpRight size={14} className="mr-1" />
-              +{users.filter((u: any) => new Date(u.createdAt).getMonth() === new Date().getMonth()).length} this month
+              +{Array.isArray(users) ? users.filter((u: any) => u.createdAt && new Date(u.createdAt).getMonth() === new Date().getMonth()).length : 0} this month
             </p>
           </CardContent>
         </Card>
@@ -146,10 +146,10 @@ const Dashboard: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
+            <div className="text-2xl font-bold">{Array.isArray(products) ? products.length : 0}</div>
             <p className="text-xs text-amber-600 flex items-center mt-1 font-medium">
               <RefreshCw size={14} className="mr-1" />
-              {products.filter((p: any) => p.stock < 10).length} items low stock
+              {Array.isArray(products) ? products.filter((p: any) => p.stock < 10).length : 0} items low stock
             </p>
           </CardContent>
         </Card>
@@ -162,10 +162,10 @@ const Dashboard: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{orders.length}</div>
+            <div className="text-2xl font-bold">{Array.isArray(orders) ? orders.length : 0}</div>
             <p className="text-xs text-green-600 flex items-center mt-1 font-medium">
               <ArrowUpRight size={14} className="mr-1" />
-              {orders.filter((o: any) => o.status === 'Placed').length} pending orders
+              {Array.isArray(orders) ? orders.filter((o: any) => o.status === 'Placed').length : 0} pending orders
             </p>
           </CardContent>
         </Card>

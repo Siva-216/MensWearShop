@@ -31,7 +31,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
       return;
     }
     
-    addToCart(product, product.sizes[0] || "M");
+    const firstVariant = product.variants?.[0];
+    const targetSize = firstVariant?.size || product.sizes?.[0] || "M";
+    const targetColor = firstVariant?.color || product.colors?.[0] || "None";
+    const targetSku = firstVariant?.sku || "";
+    const targetPrice = firstVariant?.price || product.price;
+
+    addToCart(product, targetSize, targetColor, targetSku, targetPrice);
     toast.success(`${product.name} added to cart`);
   };
 
@@ -136,11 +142,20 @@ const ProductCard = ({ product }: ProductCardProps) => {
         
         <div className="flex items-center gap-3">
           <p className="text-sm font-body font-bold text-foreground">
-            ${product.price}
+            {(() => {
+              const prices = product.variants?.map((v: any) => v.price).filter((p: number) => p > 0) || [];
+              const min = prices.length > 0 ? Math.min(...prices) : product.price;
+              const max = prices.length > 0 ? Math.max(...prices) : product.price;
+              
+              if (min === max) {
+                return `₹${min.toLocaleString()}`;
+              }
+              return `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
+            })()}
           </p>
-          {product.discountPrice && (
+          {(product.discountPrice && product.discountPrice > 0) && (
             <p className="text-xs font-body font-medium text-muted-foreground line-through decoration-red-500/50">
-              ${product.discountPrice}
+              ₹{product.discountPrice.toLocaleString()}
             </p>
           )}
         </div>

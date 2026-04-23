@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import Layout from "@/components/Layout";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import { useMemo } from "react";
 
 const collections = [
   {
@@ -87,6 +90,26 @@ const collections = [
 ];
 
 const TheCollections = () => {
+  const { data: dbCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => api.categories.getAll(),
+  });
+
+  const dynamicCollections = useMemo(() => {
+    return collections.map(link => {
+      const match = dbCategories?.find((cat: any) => 
+        cat.name.toLowerCase() === link.category.toLowerCase()
+      );
+      
+      return {
+        ...link,
+        image: (match && match.images && match.images[0]) ? match.images[0] : link.image,
+        description: match?.description || link.description,
+        title: match?.name || link.title
+      };
+    });
+  }, [dbCategories]);
+
   return (
     <Layout>
       <div className="container mx-auto px-4 lg:px-8 py-16 md:py-24 animate-fade-in">
@@ -101,35 +124,35 @@ const TheCollections = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 lg:gap-8 overflow-hidden">
           {/* Row 1: Shirts & Basics */}
           <div className="md:col-span-8 md:row-span-2 group relative aspect-[16/10] md:aspect-auto overflow-hidden bg-muted">
-            <CollectionCard item={collections[0]} isLarge />
+            <CollectionCard item={dynamicCollections[0]} isLarge />
           </div>
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionCard item={collections[1]} />
+            <CollectionCard item={dynamicCollections[1]} />
           </div>
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionCard item={collections[2]} />
+            <CollectionCard item={dynamicCollections[2]} />
           </div>
 
           {/* Row 2: Formal & Footwear (Mirrored) */}
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionCard item={collections[4]} />
+            <CollectionCard item={dynamicCollections[4]} />
           </div>
           <div className="md:col-span-8 md:row-span-2 group relative aspect-[16/10] md:aspect-auto overflow-hidden bg-muted">
-            <CollectionCard item={collections[3]} isLarge />
+            <CollectionCard item={dynamicCollections[3]} isLarge />
           </div>
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionCard item={collections[5]} />
+            <CollectionCard item={dynamicCollections[5]} />
           </div>
 
           {/* Row 3: Lifestyle & Fragrance */}
           <div className="md:col-span-8 md:row-span-2 group relative aspect-[16/10] md:aspect-auto overflow-hidden bg-muted">
-            <CollectionCard item={collections[6]} isLarge />
+            <CollectionCard item={dynamicCollections[6]} isLarge />
           </div>
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionCard item={collections[7]} />
+            <CollectionCard item={dynamicCollections[7]} />
           </div>
           <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionCard item={collections[8]} />
+            <CollectionCard item={dynamicCollections[8]} />
           </div>
         </div>
       </div>
