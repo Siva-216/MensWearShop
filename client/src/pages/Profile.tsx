@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { User, Package, Settings as SettingsIcon, Heart, FileText, LogOut, Edit2, AlertCircle, MapPin, Phone, ShoppingBag, Cpu, Truck, CheckCircle, ChevronLeft, CreditCard, Plus, Star } from "lucide-react";
+import { User, Package, Settings as SettingsIcon, Heart, FileText, LogOut, Edit2, AlertCircle, MapPin, Phone, ShoppingBag, Cpu, Truck, CheckCircle, ChevronLeft, CreditCard, Plus, Star, Trash2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import ReviewModal from "@/components/ReviewModal";
+import { api } from "@/lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link, useLocation, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { UserData } from "@/data/users";
@@ -15,7 +17,10 @@ const Profile = () => {
   const { items: wishlist } = useWishlist();
   
   const isAdmin = user?.role === 'admin';
-  const [activeTab, setActiveTab] = useState(isAdmin ? "info" : "overview");
+  const segments = location.pathname.split('/').filter(Boolean);
+  const activeTab = segments[segments.length - 1] === 'profile' 
+    ? (isAdmin ? "info" : "overview") 
+    : segments[segments.length - 1];
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -24,13 +29,12 @@ const Profile = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Handle legacy state transitions
   useEffect(() => {
     if (location.state?.activeTab) {
-      setActiveTab(location.state.activeTab);
-      // Clear the state so it doesn't keep resetting on every render
-      window.history.replaceState({}, document.title);
+      navigate(`/profile/${location.state.activeTab}`, { replace: true });
     }
-  }, [location.state]);
+  }, [location.state, navigate]);
 
   if (!user) return null;
 
@@ -42,15 +46,16 @@ const Profile = () => {
   };
 
   const menuItems = [
-    ...(!isAdmin ? [{ id: "overview", label: "Overview", icon: User }] : []),
-    ...(!isAdmin ? [{ id: "orders", label: "Orders", icon: Package }] : []),
-    { id: "info", label: "User Info", icon: FileText },
-    { id: "settings", label: "Settings", icon: SettingsIcon },
+    ...(!isAdmin ? [{ id: "overview", label: "Overview", icon: User, path: "/profile/overview" }] : []),
+    ...(!isAdmin ? [{ id: "orders", label: "Orders", icon: Package, path: "/profile/orders" }] : []),
+    ...(!isAdmin ? [{ id: "reviews", label: "My Reviews", icon: Star, path: "/profile/reviews" }] : []),
+    { id: "info", label: "User Info", icon: FileText, path: "/profile/info" },
+    { id: "settings", label: "Settings", icon: SettingsIcon, path: "/profile/settings" },
   ];
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 lg:px-8 py-12 md:py-20">
+      <div className="container max-w-7xl mx-auto px-4 lg:px-8 py-20 md:py-32 min-h-[70vh]">
         <div className="flex flex-col lg:flex-row gap-12">
           
           {/* Left Sidebar Navigation */}
@@ -64,9 +69,9 @@ const Profile = () => {
                 {menuItems.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <button
+                    <Link
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
+                      to={item.path}
                       className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-body transition-all duration-200 ${
                         activeTab === item.id 
                           ? "bg-foreground text-background font-bold shadow-md" 
@@ -75,7 +80,7 @@ const Profile = () => {
                     >
                       <Icon size={18} />
                       {item.label}
-                    </button>
+                    </Link>
                   );
                 })}
                 <hr className="my-4 border-border" />
@@ -92,10 +97,15 @@ const Profile = () => {
 
           {/* Right Content Area */}
           <div className="flex-1 min-w-0">
-            {activeTab === "overview" && <OverviewTab user={user} wishlistCount={wishlist?.length || 0} />}
-            {activeTab === "orders" && <OrdersTab orders={user.orders} user={user} />}
-            {activeTab === "info" && <UserInfoTab storedUser={user} />}
-            {activeTab === "settings" && <SettingsTab />}
+            <Routes>
+              <Route path="/" element={<Navigate to={isAdmin ? "info" : "overview"} replace />} />
+              {!isAdmin && <Route path="overview" element={<OverviewTab user={user} wishlistCount={wishlist?.length || 0} />} />}
+              {!isAdmin && <Route path="orders" element={<OrdersTab orders={user.orders} user={user} />} />}
+              {!isAdmin && <Route path="orders/:orderId" element={<OrdersTab orders={user.orders} user={user} />} />}
+              {!isAdmin && <Route path="reviews" element={<MyReviewsTab userId={user.id || user._id} userName={user.fullName || user.name} />} />}
+              <Route path="info" element={<UserInfoTab storedUser={user} />} />
+              <Route path="settings" element={<SettingsTab />} />
+            </Routes>
           </div>
 
         </div>
@@ -147,7 +157,7 @@ const OverviewTab = ({ user, wishlistCount }: { user: UserData; wishlistCount: n
               <Package size={20} /> Recent Orders
             </h2>
             {user.orders.length > 3 && (
-              <button className="text-xs font-body font-bold underline underline-offset-4">View All</button>
+              <Link to="/profile/orders" className="text-xs font-body font-bold underline underline-offset-4">View All</Link>
             )}
           </div>
           <div className="space-y-0 border-t border-border">
@@ -214,9 +224,22 @@ const OverviewTab = ({ user, wishlistCount }: { user: UserData; wishlistCount: n
 };
 
 const OrdersTab = ({ orders, user }: { orders: any[]; user: any }) => {
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const { orderId } = useParams();
+  const { refreshOrders } = useAuth();
+  const navigate = useNavigate();
+  
   const [reviewProduct, setReviewProduct] = useState<any | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
+  // Dynamic update for orders
+  useEffect(() => {
+    refreshOrders();
+    // Optional: add a polling interval if status changes are frequent
+    const interval = setInterval(refreshOrders, 30000); // refresh every 30s
+    return () => clearInterval(interval);
+  }, [refreshOrders]);
+
+  const selectedOrder = orders.find(o => o.id === orderId);
 
   const steps = [
     { id: 1, label: "Order Placed", icon: ShoppingBag, statusKey: "Order Placed" },
@@ -239,12 +262,12 @@ const OrdersTab = ({ orders, user }: { orders: any[]; user: any }) => {
     <div className="animate-fade-in">
       {selectedOrder ? (
         <div className="space-y-8">
-          <button 
-            onClick={() => setSelectedOrder(null)}
-            className="flex items-center gap-2 text-xs font-body font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+          <Link 
+            to="/profile/orders"
+            className="flex items-center gap-2 text-xs font-body font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors w-fit"
           >
             <ChevronLeft size={14} /> Back to History
-          </button>
+          </Link>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/30 p-6 border border-border">
             <div>
@@ -304,7 +327,7 @@ const OrdersTab = ({ orders, user }: { orders: any[]; user: any }) => {
                         <p className="text-[10px] font-body text-muted-foreground uppercase tracking-wider mt-1">Qty: {item.quantity}</p>
                         <div className="flex items-center justify-between mt-1">
                           <p className="font-body font-bold text-sm">₹{item.price}</p>
-                          {(selectedOrder.status?.toLowerCase() === 'delivered') && (
+                          {(selectedOrder.status?.toLowerCase() === 'delivered' || selectedOrder.status?.toLowerCase() === 'completed') && (
                             <button 
                               onClick={() => {
                                 setReviewProduct(item);
@@ -406,12 +429,12 @@ const OrdersTab = ({ orders, user }: { orders: any[]; user: any }) => {
                       </span>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => setSelectedOrder(order)}
+                  <Link 
+                    to={`/profile/orders/${order.id}`}
                     className="shrink-0 btn-hero py-2 px-6 text-xs w-full md:w-auto text-center"
                   >
                     View Details
-                  </button>
+                  </Link>
                 </div>
               ))
             ) : (
@@ -783,6 +806,153 @@ const SettingsTab = () => {
           </button>
         </div>
       </div>
+    </div>
+  );
+};
+// ... existing components ...
+
+const MyReviewsTab = ({ userId, userName }: { userId: string, userName: string }) => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [editingReview, setEditingReview] = useState<any | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const { data: reviews, isLoading: reviewsLoading, refetch } = useQuery({
+    queryKey: ["user-reviews", userId],
+    queryFn: () => api.reviews.getByUser(userId),
+  });
+
+  const { data: products, isLoading: productsLoading } = useQuery({
+    queryKey: ["products"],
+    queryFn: () => api.products.getAll(),
+  });
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this review?")) {
+      try {
+        await api.reviews.delete(id);
+        toast.success("Review deleted successfully");
+        refetch();
+        queryClient.invalidateQueries({ queryKey: ["products"] });
+      } catch (error) {
+        toast.error("Failed to delete review");
+      }
+    }
+  };
+
+  const handleEdit = (review: any) => {
+    setEditingReview(review);
+    setIsModalOpen(true);
+  };
+
+  if (reviewsLoading || productsLoading) return <div className="py-20 text-center animate-pulse">Loading your reviews...</div>;
+
+  const getProduct = (productId: string) => {
+    return products?.find((p: any) => p.id === productId);
+  };
+
+  return (
+    <div className="animate-fade-in space-y-8">
+      <div>
+        <h2 className="font-display text-3xl font-bold mb-2">My Reviews</h2>
+        <p className="text-sm font-body text-muted-foreground">Manage the reviews you've shared with the community.</p>
+      </div>
+
+      <div className="space-y-4">
+        {reviews && reviews.length > 0 ? (
+          reviews.map((review: any) => {
+            const product = getProduct(review.productId);
+            return (
+              <div key={review.id} className="bg-card border border-border p-6 shadow-sm hover:border-foreground/30 transition-all">
+                <div className="flex flex-col md:flex-row justify-between gap-6">
+                  <div className="flex-1 space-y-4">
+                    {/* Product Info Link */}
+                    <button 
+                      onClick={() => navigate(`/product/${review.productId}`)}
+                      className="flex items-center gap-4 text-left group/prod"
+                    >
+                      <div className="w-12 h-16 bg-muted flex items-center justify-center overflow-hidden border border-border/50 group-hover/prod:border-foreground/30 transition-all">
+                        {product?.image ? (
+                          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <ShoppingBag size={18} className="text-muted-foreground/30" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-body font-bold tracking-widest uppercase text-muted-foreground mb-0.5">Product</p>
+                        <p className="font-body font-bold text-sm group-hover/prod:underline underline-offset-4">{product?.name || "Product Name"}</p>
+                      </div>
+                    </button>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star key={s} size={14} className={s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted/30"} />
+                          ))}
+                        </div>
+                        <span className="text-[10px] font-body text-muted-foreground uppercase tracking-widest">
+                          {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : "Recently"}
+                        </span>
+                      </div>
+                      <p className="font-body text-sm text-foreground leading-relaxed italic">"{review.comment}"</p>
+                      <p className="text-[10px] font-body font-bold text-muted-foreground uppercase tracking-wider">
+                        Status: <span className={review.status === 'Approved' ? 'text-green-600' : 'text-orange-600'}>{review.status || 'Pending'}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-end md:self-start">
+                    <button 
+                      onClick={() => handleEdit(review)}
+                      className="p-2 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors rounded-sm"
+                      title="Edit Review"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(review.id)}
+                      className="p-2 hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors rounded-sm"
+                      title="Delete Review"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="py-20 text-center border border-dashed border-border bg-muted/10">
+            <p className="text-muted-foreground font-body italic">You haven't written any reviews yet.</p>
+          </div>
+        )}
+      </div>
+
+      {editingReview && (
+        <ReviewModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          product={{
+            id: editingReview.productId,
+            name: getProduct(editingReview.productId)?.name || "Product",
+            image: getProduct(editingReview.productId)?.image || ""
+          }}
+          orderId={editingReview.orderId}
+          userId={userId}
+          userName={userName}
+          initialData={{
+            id: editingReview.id,
+            rating: editingReview.rating,
+            comment: editingReview.comment
+          }}
+          onSuccess={() => {
+            refetch();
+            queryClient.invalidateQueries({ queryKey: ["products"] });
+            setIsModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };

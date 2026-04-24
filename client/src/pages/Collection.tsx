@@ -20,6 +20,11 @@ const Collection = () => {
     queryFn: () => api.products.getAll(),
   });
 
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => api.categories.getAll(),
+  });
+
   const [searchParams] = useSearchParams();
   const initialCategory = searchParams.get("category") || "";
 
@@ -30,8 +35,13 @@ const Collection = () => {
   const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Derive available categories and brands from products
-  const categories = useMemo(() => Array.from(new Set((productsData || []).map((p: any) => (p.categoryName || p.category) as string))).filter(Boolean).sort(), [productsData]);
+  // Use all categories from backend if available, otherwise fallback to products
+  const categories = useMemo(() => {
+    if (categoriesData && Array.isArray(categoriesData)) {
+      return categoriesData.map((c: any) => c.name).sort();
+    }
+    return Array.from(new Set((productsData || []).map((p: any) => (p.categoryName || p.category) as string))).filter(Boolean).sort();
+  }, [categoriesData, productsData]);
   const brands = useMemo(() => Array.from(new Set((productsData || []).map((p: any) => p.brand as string))).sort(), [productsData]);
 
   const toggleFilter = (list: string[], setList: (val: string[]) => void, item: string) => {
@@ -45,12 +55,12 @@ const Collection = () => {
       if (selectedSizes.length && !p.sizes?.some((s: string) => selectedSizes.includes(s))) return false;
       if (selectedBrands.length && !selectedBrands.includes(p.brand)) return false;
       if (selectedRating !== null && (p.rating || 0) < selectedRating) return false;
-      
+
       if (selectedPriceRange !== null) {
         const range = priceRanges[selectedPriceRange];
         const variantPrices = p.variants?.map((v: any) => v.price).filter((pr: number) => pr > 0) || [];
         const effectivePrice = variantPrices.length > 0 ? Math.min(...variantPrices) : p.price;
-        
+
         if (effectivePrice < range.min || effectivePrice >= range.max) return false;
       }
       return true;
@@ -65,18 +75,18 @@ const Collection = () => {
     setSelectedPriceRange(null);
   };
 
-  const hasFilters = 
-    selectedCategories.length > 0 || 
-    selectedSizes.length > 0 || 
-    selectedBrands.length > 0 || 
-    selectedRating !== null || 
+  const hasFilters =
+    selectedCategories.length > 0 ||
+    selectedSizes.length > 0 ||
+    selectedBrands.length > 0 ||
+    selectedRating !== null ||
     selectedPriceRange !== null;
 
   const FilterSidebar = () => (
     <div className="space-y-10 pb-10">
       {hasFilters && (
-        <button 
-          onClick={clearAll} 
+        <button
+          onClick={clearAll}
           className="w-full py-4 text-[10px] font-body font-bold tracking-[0.2em] uppercase border border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background transition-all duration-300"
         >
           Clear All Filters
@@ -88,11 +98,11 @@ const Collection = () => {
         <div className="space-y-2.5">
           {(categories as string[]).map((cat: string) => (
             <label key={cat} className="flex items-center gap-3 cursor-pointer group">
-              <input 
-                type="checkbox" 
-                checked={selectedCategories.includes(cat)} 
-                onChange={() => toggleFilter(selectedCategories, setSelectedCategories, cat)} 
-                className="w-4 h-4 rounded-none border-border text-foreground focus:ring-0 focus:ring-offset-0 transition-all checked:bg-foreground" 
+              <input
+                type="checkbox"
+                checked={selectedCategories.includes(cat)}
+                onChange={() => toggleFilter(selectedCategories, setSelectedCategories, cat)}
+                className="w-4 h-4 rounded-none border-border text-foreground focus:ring-0 focus:ring-offset-0 transition-all checked:bg-foreground"
               />
               <span className="text-sm font-body text-muted-foreground group-hover:text-foreground transition-colors">{cat}</span>
             </label>
@@ -106,11 +116,11 @@ const Collection = () => {
         <div className="max-h-48 overflow-y-auto space-y-2.5 custom-scrollbar pr-2">
           {(brands as string[]).map((brand: string) => (
             <label key={brand} className="flex items-center gap-3 cursor-pointer group">
-              <input 
-                type="checkbox" 
-                checked={selectedBrands.includes(brand)} 
-                onChange={() => toggleFilter(selectedBrands, setSelectedBrands, brand)} 
-                className="w-4 h-4 rounded-none border-border text-foreground focus:ring-0 focus:ring-offset-0 transition-all checked:bg-foreground" 
+              <input
+                type="checkbox"
+                checked={selectedBrands.includes(brand)}
+                onChange={() => toggleFilter(selectedBrands, setSelectedBrands, brand)}
+                className="w-4 h-4 rounded-none border-border text-foreground focus:ring-0 focus:ring-offset-0 transition-all checked:bg-foreground"
               />
               <span className="text-sm font-body text-muted-foreground group-hover:text-foreground transition-colors">{brand}</span>
             </label>
@@ -124,13 +134,13 @@ const Collection = () => {
         <div className="space-y-2.5">
           {priceRanges.map((range, i) => (
             <label key={range.label} className="flex items-center gap-3 cursor-pointer group">
-              <input 
-                type="radio" 
-                name="price" 
-                checked={selectedPriceRange === i} 
-                onClick={() => setSelectedPriceRange(selectedPriceRange === i ? null : i)} 
-                onChange={() => {}}
-                className="w-4 h-4 border-border text-foreground focus:ring-0 focus:ring-offset-0 transition-all checked:bg-foreground appearance-none rounded-full border bg-transparent checked:border-[5px]" 
+              <input
+                type="radio"
+                name="price"
+                checked={selectedPriceRange === i}
+                onClick={() => setSelectedPriceRange(selectedPriceRange === i ? null : i)}
+                onChange={() => { }}
+                className="w-4 h-4 border-border text-foreground focus:ring-0 focus:ring-offset-0 transition-all checked:bg-foreground appearance-none rounded-full border bg-transparent checked:border-[5px]"
               />
               <span className="text-sm font-body text-muted-foreground group-hover:text-foreground transition-colors">{range.label}</span>
             </label>
@@ -143,9 +153,9 @@ const Collection = () => {
         <h3 className="text-[11px] font-body font-bold tracking-[0.2em] uppercase mb-4 text-foreground/90">Size</h3>
         <div className="flex gap-2 flex-wrap">
           {sizes.map((size) => (
-            <button 
-              key={size} 
-              onClick={() => toggleFilter(selectedSizes, setSelectedSizes, size)} 
+            <button
+              key={size}
+              onClick={() => toggleFilter(selectedSizes, setSelectedSizes, size)}
               className={`min-w-[40px] h-10 px-2 text-[10px] font-body font-bold border transition-all duration-300 ${selectedSizes.includes(size) ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"}`}
             >
               {size}
@@ -159,8 +169,8 @@ const Collection = () => {
         <h3 className="text-[11px] font-body font-bold tracking-[0.2em] uppercase mb-4 text-foreground/90">Minimum Rating</h3>
         <div className="flex gap-2">
           {[4, 3, 2, 1].map((rating) => (
-            <button 
-              key={rating} 
+            <button
+              key={rating}
               onClick={() => setSelectedRating(selectedRating === rating ? null : rating)}
               className={`flex-1 h-10 flex items-center justify-center gap-1 border transition-all duration-300 ${selectedRating === rating ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:border-foreground"}`}
             >
@@ -188,8 +198,8 @@ const Collection = () => {
               Showing {filtered.length} items
             </p>
           </div>
-          <button 
-            onClick={() => setFiltersOpen(!filtersOpen)} 
+          <button
+            onClick={() => setFiltersOpen(!filtersOpen)}
             className="lg:hidden flex items-center justify-center gap-3 text-[10px] font-body font-bold tracking-[0.2em] uppercase border border-border px-6 py-4 hover:bg-muted transition-all active:scale-95 bg-card sticky top-20 z-30 shadow-sm"
           >
             <SlidersHorizontal size={14} />
@@ -228,10 +238,10 @@ const Collection = () => {
                 </div>
                 <p className="text-lg font-display font-medium mb-2">No products found</p>
                 <p className="text-sm font-body text-muted-foreground max-w-xs mb-8">
-                  We couldn't find any products matching your current selection. 
+                  We couldn't find any products matching your current selection.
                 </p>
-                <button 
-                  onClick={clearAll} 
+                <button
+                  onClick={clearAll}
                   className="px-8 py-3 bg-foreground text-background text-[10px] font-bold tracking-[0.2em] uppercase hover:opacity-90 transition-opacity"
                 >
                   Reset All Filters

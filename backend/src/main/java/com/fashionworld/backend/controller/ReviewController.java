@@ -20,14 +20,39 @@ import com.fashionworld.backend.service.ReviewService;
 @RestController
 @RequestMapping("/api/reviews")
 public class ReviewController {
+    // Admin management endpoints
 
     @Autowired
     private ReviewService reviewService;
 
+    @Autowired
+    private com.fashionworld.backend.service.ProductService productService;
+
+    @GetMapping("/sync-ratings")
+    public ResponseEntity<String> syncRatings() {
+        productService.syncAllProductRatings();
+        return new ResponseEntity<>("Product ratings synced successfully", HttpStatus.OK);
+    }
+
+    @GetMapping("/admin/all")
+    public ResponseEntity<?> getAllReviews() {
+        try {
+            List<Review> reviews = reviewService.getAllReviews();
+            return new ResponseEntity<>(reviews, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Error fetching reviews: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping
-    public ResponseEntity<Review> createReview(@RequestBody Review review) {
-        Review savedReview = reviewService.createReview(review);
-        return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
+    public ResponseEntity<?> createReview(@RequestBody Review review) {
+        try {
+            Review savedReview = reviewService.createReview(review);
+            return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/product/{productId}")

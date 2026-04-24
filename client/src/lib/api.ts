@@ -133,14 +133,20 @@ export const api = {
 
   // Reviews
   reviews: {
-    getAll: () => fetch(`${BASE_URL}/reviews`).then(res => res.json()),
-    getByProduct: (productId: string) => fetch(`${BASE_URL}/reviews/product/${productId}`).then(res => res.json()),
-    getByOrder: (orderId: string) => fetch(`${BASE_URL}/reviews/order/${orderId}`).then(res => res.json()),
+    getAll: () => fetch(`${BASE_URL}/products/reviews/admin/all`).then(handleResponse).then(data => Array.isArray(data) ? data : []),
+    getByProduct: (productId: string) => fetch(`${BASE_URL}/reviews/product/${productId}`).then(handleResponse).then(data => Array.isArray(data) ? data : []),
+    getByUser: (userId: string) => fetch(`${BASE_URL}/reviews/user/${userId}`).then(handleResponse).then(data => Array.isArray(data) ? data : []),
+    getByOrder: (orderId: string) => fetch(`${BASE_URL}/reviews/order/${orderId}`).then(handleResponse).then(data => Array.isArray(data) ? data : []),
     create: (data: any) => fetch(`${BASE_URL}/reviews`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then(res => res.json()),
+    }).then(handleResponse),
+    update: (id: string, data: any) => fetch(`${BASE_URL}/reviews/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse),
     delete: (id: string) => fetch(`${BASE_URL}/reviews/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),

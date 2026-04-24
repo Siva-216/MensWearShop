@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Star, X, Camera, Send, Loader2, ShoppingBag } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -16,14 +16,26 @@ interface ReviewModalProps {
   userId: string;
   userName: string;
   onSuccess: () => void;
+  initialData?: {
+    id: string;
+    rating: number;
+    comment: string;
+  };
 }
 
-const ReviewModal = ({ isOpen, onClose, product, orderId, userId, userName, onSuccess }: ReviewModalProps) => {
+const ReviewModal = ({ isOpen, onClose, product, orderId, userId, userName, onSuccess, initialData }: ReviewModalProps) => {
   const queryClient = useQueryClient();
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
+  const [rating, setRating] = useState(initialData?.rating || 0);
+  const [comment, setComment] = useState(initialData?.comment || "");
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setRating(initialData.rating);
+      setComment(initialData.comment);
+    }
+  }, [initialData]);
 
   if (!isOpen) return null;
 
@@ -40,16 +52,29 @@ const ReviewModal = ({ isOpen, onClose, product, orderId, userId, userName, onSu
 
     setIsSubmitting(true);
     try {
-      await api.reviews.create({
-        productId: product.id,
-        orderId: orderId,
-        userId: userId,
-        userName: userName,
-        rating: rating,
-        comment: comment,
-        createdAt: new Date().toISOString()
-      });
-      toast.success("Thank you! Your review has been submitted.");
+      if (initialData) {
+        await api.reviews.update(initialData.id, {
+          productId: product.id,
+          orderId: orderId,
+          userId: userId,
+          userName: userName,
+          rating: rating,
+          comment: comment,
+          createdAt: new Date().toISOString()
+        });
+        toast.success("Your review has been updated.");
+      } else {
+        await api.reviews.create({
+          productId: product.id,
+          orderId: orderId,
+          userId: userId,
+          userName: userName,
+          rating: rating,
+          comment: comment,
+          createdAt: new Date().toISOString()
+        });
+        toast.success("Thank you! Your review has been submitted.");
+      }
       
       // Invalidate queries to refresh data across the app
       queryClient.invalidateQueries({ queryKey: ["reviews", product.id] });

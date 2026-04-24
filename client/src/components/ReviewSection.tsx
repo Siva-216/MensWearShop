@@ -17,8 +17,10 @@ const ReviewSection = ({ productId }: ReviewSectionProps) => {
     return <div className="py-10 text-center animate-pulse">Loading reviews...</div>;
   }
 
-  const averageRating = reviews?.length > 0
-    ? reviews.reduce((acc: number, rev: any) => acc + rev.rating, 0) / reviews.length
+  const approvedReviews = (reviews || []).filter((r: any) => r.status === 'Approved' || !r.status);
+
+  const averageRating = approvedReviews.length > 0
+    ? approvedReviews.reduce((acc: number, rev: any) => acc + rev.rating, 0) / approvedReviews.length
     : 0;
 
   return (
@@ -44,8 +46,8 @@ const ReviewSection = ({ productId }: ReviewSectionProps) => {
       </div>
 
       <div className="space-y-10">
-        {reviews && reviews.length > 0 ? (
-          reviews.map((review: any) => (
+        {approvedReviews.length > 0 ? (
+          approvedReviews.map((review: any) => (
             <div key={review.id} className="pb-10 border-b border-border last:border-0 animate-fade-in">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">

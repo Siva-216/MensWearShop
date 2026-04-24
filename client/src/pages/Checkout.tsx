@@ -11,7 +11,7 @@ import { api } from "@/lib/api";
 import { useEffect } from "react";
 
 const Checkout = () => {
-  const { user, updateUser, isAuthenticated } = useAuth();
+  const { user, updateUser, isAuthenticated, refreshOrders } = useAuth();
   const { items, subtotal, clearCart } = useCart();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -44,11 +44,12 @@ const Checkout = () => {
 
   const orderMutation = useMutation({
     mutationFn: (order: any) => api.orders.create(order),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Order placed successfully!");
       clearCart();
+      await refreshOrders();
       queryClient.invalidateQueries({ queryKey: ['orders'] });
-      navigate("/profile", { state: { activeTab: "orders" } });
+      navigate("/profile/orders");
     },
     onError: (err: any) => {
       toast.error(err.message || "Something went wrong while placing order");

@@ -11,6 +11,7 @@ interface AuthContextType {
   deleteAccount: () => Promise<boolean>;
   isAuthenticated: boolean;
   loading: boolean;
+  refreshOrders: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -199,6 +200,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshOrders = React.useCallback(async () => {
+    if (!user) return;
+    try {
+      const orders = await api.orders.getByUser(user.id);
+      if (Array.isArray(orders)) {
+        setUser(prev => prev ? { 
+          ...prev, 
+          orders: orders.map(mapOrderFromBackend).filter(Boolean) as any 
+        } : null);
+      }
+    } catch (err) {
+      console.error("Failed to refresh orders:", err);
+    }
+  }, [user?.id]);
+
   const deleteAccount = async () => {
     if (!user) return false;
     try {
@@ -223,7 +239,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateUser, 
       deleteAccount,
       isAuthenticated: !!user,
-      loading
+      loading,
+      refreshOrders
     }}>
       {children}
     </AuthContext.Provider>

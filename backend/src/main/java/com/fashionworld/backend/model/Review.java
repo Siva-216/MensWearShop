@@ -7,6 +7,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "reviews")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Review {
 
     @Id
@@ -28,11 +30,13 @@ public class Review {
     
     private String userName;
     
-    private int rating; // 1 to 5
+    private Integer rating; // 1 to 5
     
     private String comment;
     
     private List<String> images; // Optional: images uploaded by the reviewer
+    
+    private String status = "Approved"; // Default to Approved for now as per current UI, but can be "Pending" for moderation
     
     @CreatedDate
     private Date createdAt;

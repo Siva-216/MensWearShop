@@ -81,7 +81,7 @@ const collectionLinks = [
   },
 ];
 
-const CollectionBentoCard = ({ item, isLarge }: { item: typeof collectionLinks[0], isLarge?: boolean }) => (
+const CollectionBentoCard = ({ item, isLarge }: { item: any, isLarge?: boolean }) => (
   <Link to={`/collection?category=${item.category}`} className="block w-full h-full group relative overflow-hidden">
     <img
       src={item.image}
@@ -157,49 +157,66 @@ const Home = () => {
         </div>
       </section>
 
-      {/* The Collections - Full Section from TheCollections.tsx */}
-      <section className="container mx-auto px-4 lg:px-8 py-20 md:py-32 overflow-hidden animate-fade-in">
+      {/* The Collections - Dynamic Bento Grid */}
+      <section className="container max-w-7xl mx-auto px-4 lg:px-8 py-20 md:py-32 overflow-hidden animate-fade-in">
         <header className="mb-16 text-center">
           <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-4">The Collections</h2>
           <p className="text-sm md:text-base font-body text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Explore our curated series of essentials, from tailored blazers to exquisite fragrances.
-            Each piece is selected for its timeless design and exceptional quality.
+            Discover our curated selections. From signature tailored pieces to premium essentials, 
+            explore collections designed for the modern lifestyle.
           </p>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 lg:gap-8 overflow-hidden">
-          {/* Row 1: Shirts & Basics */}
-          <div className="md:col-span-8 md:row-span-2 group relative aspect-[16/10] md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={dynamicCollections[0]} isLarge />
-          </div>
-          <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={dynamicCollections[1]} />
-          </div>
-          <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={dynamicCollections[2]} />
-          </div>
+          {dbCategories && Array.isArray(dbCategories) && dbCategories.length > 0 ? (
+            dbCategories.slice(0, 9).map((cat: any, index: number) => {
+              if (!cat) return null;
+              
+              // Determine grid span based on bento pattern
+              const spans = [
+                "md:col-span-8 md:row-span-2", // 1 (Large)
+                "md:col-span-4 md:row-span-1", // 2
+                "md:col-span-4 md:row-span-1", // 3
+                "md:col-span-4 md:row-span-1", // 4
+                "md:col-span-8 md:row-span-2", // 5 (Large - Mirror)
+                "md:col-span-4 md:row-span-1", // 6
+                "md:col-span-8 md:row-span-2", // 7 (Large)
+                "md:col-span-4 md:row-span-1", // 8
+                "md:col-span-4 md:row-span-1", // 9
+              ];
+              
+              const isLarge = index === 0 || index === 4 || index === 6;
+              const currentSpan = spans[index] || "md:col-span-4 md:row-span-1";
+              
+              const collectionItem = {
+                category: cat.name || "Category",
+                title: cat.name || "New Collection",
+                tagline: cat.description ? cat.description.substring(0, 20).toUpperCase() : "CURATED",
+                description: cat.description || `Exquisite pieces curated for you.`,
+                image: (cat.images && cat.images.length > 0) ? cat.images[0] : "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80"
+              };
 
-          {/* Row 2: Formal & Footwear (Mirrored) */}
-          <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={dynamicCollections[4]} />
-          </div>
-          <div className="md:col-span-8 md:row-span-2 group relative aspect-[16/10] md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={dynamicCollections[3]} isLarge />
-          </div>
-          <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={dynamicCollections[5]} />
-          </div>
-
-          {/* Row 3: Lifestyle & Fragrance */}
-          <div className="md:col-span-8 md:row-span-2 group relative aspect-[16/10] md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={dynamicCollections[6]} isLarge />
-          </div>
-          <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={dynamicCollections[7]} />
-          </div>
-          <div className="md:col-span-4 md:row-span-1 group relative aspect-square md:aspect-auto overflow-hidden bg-muted">
-            <CollectionBentoCard item={dynamicCollections[8]} />
-          </div>
+              return (
+                <div key={cat.id || `cat-${index}`} className={`${currentSpan} group relative aspect-square md:aspect-auto overflow-hidden bg-muted animate-fade-in`}>
+                  <CollectionBentoCard item={collectionItem} isLarge={isLarge} />
+                </div>
+              );
+            })
+          ) : (
+            // Fallback to static if no categories
+            dynamicCollections.map((item, index) => {
+              const spans = [
+                "md:col-span-8 md:row-span-2", "md:col-span-4 md:row-span-1", "md:col-span-4 md:row-span-1",
+                "md:col-span-4 md:row-span-1", "md:col-span-8 md:row-span-2", "md:col-span-4 md:row-span-1",
+                "md:col-span-8 md:row-span-2", "md:col-span-4 md:row-span-1", "md:col-span-4 md:row-span-1"
+              ];
+              return (
+                <div key={index} className={`${spans[index]} group relative aspect-square md:aspect-auto overflow-hidden bg-muted`}>
+                  <CollectionBentoCard item={item} isLarge={index === 0 || index === 4 || index === 6} />
+                </div>
+              );
+            })
+          )}
         </div>
       </section>
 

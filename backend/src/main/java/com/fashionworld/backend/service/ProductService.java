@@ -125,7 +125,9 @@ public class ProductService {
             return;
         }
 
-        double totalRating = reviews.stream().mapToInt(com.fashionworld.backend.model.Review::getRating).sum();
+        double totalRating = reviews.stream()
+                .mapToDouble(r -> r.getRating() != null ? r.getRating() : 0.0)
+                .sum();
         double averageRating = totalRating / reviews.size();
 
         productRepository.findById(productId).ifPresent(product -> {

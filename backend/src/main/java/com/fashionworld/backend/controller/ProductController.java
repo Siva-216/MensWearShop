@@ -26,6 +26,18 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private com.fashionworld.backend.service.ReviewService reviewService;
+
+    @GetMapping("/reviews/admin/all")
+    public ResponseEntity<?> getAllReviews() {
+        try {
+            return ResponseEntity.ok(reviewService.getAllReviews());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+        }
+    }
+
     @GetMapping
     public List<Product> getAllProducts() {
         return productService.getAllProducts();

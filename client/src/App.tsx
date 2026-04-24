@@ -71,7 +71,7 @@ const AppContent = () => {
         <Route path="/track-order" element={<TrackOrder />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/*" element={<Profile />} />
 
         {/* User-only routes */}
         {!isAdmin && (
