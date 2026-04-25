@@ -90,7 +90,7 @@ const ProductDetail = () => {
     isPerfume ? v.size === selectedSize : (v.size === selectedSize && v.color === selectedColor)
   );
 
-  const currentPrice = selectedVariant?.price || product.price;
+  const currentPrice = product.discountPrice && product.discountPrice > 0 ? product.discountPrice : (selectedVariant?.price || product.price);
 
   // Calculate price range for products with variants
   const variantPrices = product.variants?.map((v: any) => v.price).filter((p: number) => p > 0) || [];
@@ -159,7 +159,7 @@ const ProductDetail = () => {
           <div className="space-y-4 animate-fade-in group">
             <div className="aspect-[3/4] bg-muted overflow-hidden relative premium-shadow group-hover:shadow-2xl transition-all duration-700">
               <img
-                src={product.images && product.images.length > 0 ? product.images[selectedImage] : '/placeholder.svg'}
+                src={product.images && product.images.length > 0 ? product.images[selectedImage] : '/images/collections/shirts.png'}
                 alt={product.name}
                 className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-105 ${isOutOfStock ? 'grayscale opacity-60' : ''}`}
               />
@@ -196,17 +196,28 @@ const ProductDetail = () => {
             </div>
             <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold mb-3 break-words leading-tight">{product.name}</h1>
             <div className="flex items-center gap-4 mb-6">
-              <p className="font-display text-3xl font-bold tracking-tight text-foreground transition-all duration-300">
-                {currentPrice > 0 ?
-                  `₹${currentPrice.toLocaleString()}` :
-                  minPrice === maxPrice ?
-                    `₹${minPrice.toLocaleString()}` :
-                    `₹${minPrice.toLocaleString()} - ₹${maxPrice.toLocaleString()}`
-                }
-              </p>
-              {(product.discountPrice || product.price > currentPrice) && (
-                <p className="text-base font-body text-muted-foreground line-through decoration-red-500/50">
-                  ₹{(product.discountPrice || product.price).toLocaleString()}
+              {product.discountPrice && product.discountPrice > 0 ? (
+                <>
+                  <p className="font-display text-3xl font-bold tracking-tight text-foreground transition-all duration-300">
+                    ₹{product.discountPrice.toLocaleString()}
+                  </p>
+                  <p className="text-base font-body text-muted-foreground line-through decoration-red-500/50">
+                    {currentPrice > 0 ?
+                      `₹${currentPrice.toLocaleString()}` :
+                      minPrice === maxPrice ?
+                        `₹${minPrice.toLocaleString()}` :
+                        `₹${minPrice.toLocaleString()} - ₹${maxPrice.toLocaleString()}`
+                    }
+                  </p>
+                </>
+              ) : (
+                <p className="font-display text-3xl font-bold tracking-tight text-foreground transition-all duration-300">
+                  {currentPrice > 0 ?
+                    `₹${currentPrice.toLocaleString()}` :
+                    minPrice === maxPrice ?
+                      `₹${minPrice.toLocaleString()}` :
+                      `₹${minPrice.toLocaleString()} - ₹${maxPrice.toLocaleString()}`
+                  }
                 </p>
               )}
             </div>

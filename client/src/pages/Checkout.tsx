@@ -339,7 +339,7 @@ const Checkout = () => {
               <div className="space-y-6 mb-8 max-h-[300px] overflow-y-auto pr-2">
                 {items.map((item) => (
                   <div key={`${item.product.id}-${item.size}-${item.color}`} className="flex gap-4">
-                    <img src={item.product.images[0]} alt="" className="w-16 h-20 object-cover bg-background" />
+                    <img src={item.product.images && item.product.images[0] ? item.product.images[0] : '/images/collections/shirts.png'} alt="" className="w-16 h-20 object-cover bg-background" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-display font-medium truncate">{item.product.name}</p>
                       <p className="text-[10px] font-body text-muted-foreground uppercase tracking-widest mt-1">

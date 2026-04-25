@@ -58,7 +58,7 @@ const Cart = () => {
               return (
                 <div key={`${item.product.id}-${item.size}-${item.color}`} className={`grid grid-cols-[80px_1fr] lg:grid-cols-[2.5fr_1fr_1fr_1fr_auto] gap-4 py-6 border-b border-border items-center ${isOutOfStock ? 'opacity-70 bg-destructive/5' : isInsufficient ? 'bg-orange-50/50' : ''}`}>
                   <div className="flex items-center gap-4 col-span-1 lg:col-span-1">
-                    <img src={item.product.images[0]} alt={item.product.name} className={`w-20 h-24 object-cover ${isOutOfStock ? 'grayscale' : ''}`} />
+                    <img src={item.product.images && item.product.images[0] ? item.product.images[0] : '/images/collections/shirts.png'} alt={item.product.name} className={`w-20 h-24 object-cover ${isOutOfStock ? 'grayscale' : ''}`} />
                     <div className="hidden lg:block">
                       <p className="font-display text-sm font-medium">{item.product.name}</p>
                       <p className="text-xs font-body text-muted-foreground mb-1">
@@ -73,7 +73,7 @@ const Cart = () => {
                   </div>
                   <div className="lg:hidden glass-card p-4 premium-shadow-sm mb-4">
                     <div className="flex gap-4">
-                      <img src={item.product.images[0]} alt="" className="w-20 h-24 object-cover" />
+                      <img src={item.product.images && item.product.images[0] ? item.product.images[0] : '/images/collections/shirts.png'} alt="" className="w-20 h-24 object-cover" />
                       <div className="flex-1">
                         <p className="font-display text-sm font-bold">{item.product.name}</p>
                         <p className="text-[10px] font-body text-muted-foreground uppercase tracking-widest mt-1">

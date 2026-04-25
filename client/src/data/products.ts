@@ -6,6 +6,7 @@ export interface Product {
   categoryName?: string;
   brand: string;
   price: number;
+  basePrice?: number;
   discountPrice?: number;
   description: string;
   images: string[];
@@ -13,6 +14,8 @@ export interface Product {
   colors?: string[];
   rating: number;
   stock: number;
+  salesCount?: number;
   isNew?: boolean;
   isSale?: boolean;
+  createdAt?: string;
 }

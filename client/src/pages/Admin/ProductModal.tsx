@@ -209,7 +209,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               </div>
 
               <div className="grid grid-cols-3 gap-6">
-                <div className="space-y-2">
+                 <div className="space-y-2">
                   <Label htmlFor="basePrice" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Base Price (₹)</Label>
                   <Input id="basePrice" type="number" step="0.01" {...register('basePrice', { required: true })} className="h-11 bg-muted/20 border-none" />
                 </div>
@@ -217,6 +217,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   <Label htmlFor="discountPrice" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Discount Price (₹)</Label>
                   <Input id="discountPrice" type="number" step="0.01" {...register('discountPrice')} className="h-11 bg-muted/20 border-none" />
                 </div>
+               
                 <div className="space-y-2">
                   <Label htmlFor="category" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Category</Label>
                   <Select 
@@ -513,7 +514,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     {url && (
                       <div className="mt-6 flex items-start gap-6 p-4 bg-muted/5 rounded-xl animate-in fade-in slide-in-from-top-4 duration-500">
                         <div className="h-32 w-28 rounded-xl overflow-hidden border-2 border-background shadow-lg shrink-0 group-hover:scale-105 transition-transform duration-500">
-                          <img src={url} alt="Preview" className="h-full w-full object-cover" />
+                          <img src={url || '/images/collections/shirts.png'} alt="Preview" className="h-full w-full object-cover" />
                         </div>
                         <div className="flex-1 pt-2 space-y-2 overflow-hidden">
                           <div className="flex items-center gap-2">

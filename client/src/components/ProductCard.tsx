@@ -35,7 +35,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
     const targetSize = firstVariant?.size || product.sizes?.[0] || "M";
     const targetColor = firstVariant?.color || product.colors?.[0] || "None";
     const targetSku = firstVariant?.sku || "";
-    const targetPrice = firstVariant?.price || product.price;
+    const targetPrice = product.discountPrice && product.discountPrice > 0 ? product.discountPrice : (firstVariant?.price || product.price);
 
     addToCart(product, targetSize, targetColor, targetSku, targetPrice);
     toast.success(`${product.name} added to cart`);
@@ -68,7 +68,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
         onMouseLeave={() => setHovered(false)}
       >
         <img
-          src={hovered && product.images[1] ? product.images[1] : product.images[0]}
+          src={
+            (hovered && product.images && product.images[1]) 
+              ? product.images[1] 
+              : (product.images && product.images[0]) 
+                ? product.images[0] 
+                : '/images/collections/shirts.png'
+          }
           alt={product.name}
           className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${isOutOfStock ? 'grayscale opacity-60' : ''}`}
           loading="lazy"
@@ -144,21 +150,36 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <h3 className="font-display text-sm md:text-base font-semibold group-hover:text-muted-foreground transition-colors line-clamp-1">{product.name}</h3>
         
         <div className="flex items-center gap-3">
-          <p className="text-sm font-body font-bold text-foreground">
-            {(() => {
-              const prices = product.variants?.map((v: any) => v.price).filter((p: number) => p > 0) || [];
-              const min = prices.length > 0 ? Math.min(...prices) : product.price;
-              const max = prices.length > 0 ? Math.max(...prices) : product.price;
-              
-              if (min === max) {
-                return `₹${min.toLocaleString()}`;
-              }
-              return `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
-            })()}
-          </p>
-          {(product.discountPrice && product.discountPrice > 0) && (
-            <p className="text-xs font-body font-medium text-muted-foreground line-through decoration-red-500/50">
-              ₹{product.discountPrice.toLocaleString()}
+          {product.discountPrice && product.discountPrice > 0 ? (
+            <>
+              <p className="text-sm font-body font-bold text-foreground">
+                ₹{product.discountPrice.toLocaleString()}
+              </p>
+              <p className="text-xs font-body font-medium text-muted-foreground line-through decoration-red-500/50">
+                {(() => {
+                  const prices = product.variants?.map((v: any) => v.price).filter((p: number) => p > 0) || [];
+                  const min = prices.length > 0 ? Math.min(...prices) : (product.basePrice || product.price);
+                  const max = prices.length > 0 ? Math.max(...prices) : (product.basePrice || product.price);
+                  
+                  if (min === max) {
+                    return `₹${min.toLocaleString()}`;
+                  }
+                  return `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
+                })()}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm font-body font-bold text-foreground">
+              {(() => {
+                const prices = product.variants?.map((v: any) => v.price).filter((p: number) => p > 0) || [];
+                const min = prices.length > 0 ? Math.min(...prices) : (product.basePrice || product.price);
+                const max = prices.length > 0 ? Math.max(...prices) : (product.basePrice || product.price);
+                
+                if (min === max) {
+                  return `₹${min.toLocaleString()}`;
+                }
+                return `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
+              })()}
             </p>
           )}
         </div>

@@ -56,6 +56,7 @@ public class Product {
 
     private double rating;
     private int numReviews;
+    private int salesCount;
 
     @CreatedDate
     private Date createdAt;

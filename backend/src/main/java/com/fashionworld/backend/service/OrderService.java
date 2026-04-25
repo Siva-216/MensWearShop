@@ -78,6 +78,7 @@ public class OrderService {
                             }
                         }
                     }
+                    product.setSalesCount(product.getSalesCount() + item.getQuantity());
                     productRepository.save(product);
                     
                     System.out.println("Item: " + product.getName() + " | Price: " + currentPrice + " | SKU: " + item.getSku() + " updated in local variants.");
@@ -182,6 +183,7 @@ public class OrderService {
                                     }
                                 }
                             }
+                            product.setSalesCount(Math.max(0, product.getSalesCount() - item.getQuantity()));
                             productRepository.save(product);
                         });
                     }

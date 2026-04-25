@@ -55,7 +55,7 @@ const Profile = () => {
 
   return (
     <Layout>
-      <div className="container max-w-7xl mx-auto px-4 lg:px-8 py-20 md:py-32 min-h-[70vh]">
+      <div className="container max-w-7xl mx-auto px-4 lg:px-8 pt-10 pb-20 md:pt-24 md:pb-32 min-h-[70vh]">
         <div className="flex flex-col lg:flex-row gap-12">
           
           {/* Left Sidebar Navigation */}

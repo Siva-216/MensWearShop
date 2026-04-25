@@ -133,7 +133,15 @@ const Home = () => {
     });
   }, [dbCategories]);
 
-  const newArrivals = (allProducts || []).slice(0, 8);
+  const newArrivals = useMemo(() => {
+    return (allProducts || [])
+      .sort((a: any, b: any) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      })
+      .slice(0, 4);
+  }, [allProducts]);
   const isLoading = productsLoading;
 
   return (
