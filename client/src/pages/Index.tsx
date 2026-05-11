@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Plus, Minus } from "lucide-react";
+import { ArrowRight, Plus, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
@@ -108,6 +108,138 @@ const CollectionBentoCard = ({ item, isLarge }: { item: any, isLarge?: boolean }
   </Link>
 );
 
+const carouselImages = [
+  {
+    id: 1,
+    url: "/images/hero/slide_1.png",
+    title: "Redefine Your\nStyle",
+    subtitle: "New Season Collection",
+    cta: "Shop New Arrivals"
+  },
+  {
+    id: 2,
+    url: "/images/hero/slide_2.png",
+    title: "Elevated\nEssentials",
+    subtitle: "Premium Quality",
+    cta: "Discover Collection"
+  },
+  {
+    id: 3,
+    url: "/images/hero/slide_3.png",
+    title: "Modern\nTailoring",
+    subtitle: "The Perfect Fit",
+    cta: "Explore Suits"
+  },
+  {
+    id: 4,
+    url: "/images/hero/slide_4.png",
+    title: "Urban\nStreetwear",
+    subtitle: "Contemporary Fits",
+    cta: "Shop The Look"
+  },
+  {
+    id: 5,
+    url: "/images/hero/slide_5.png",
+    title: "Luxury\nAccessories",
+    subtitle: "The Finishing Touch",
+    cta: "View Accessories"
+  }
+];
+
+const HeroCarousel = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % carouselImages.length);
+  }, []);
+
+  const prevSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
+  }, []);
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % carouselImages.length);
+    }, 30000);
+
+    return () => clearInterval(timer);
+  }, [currentIndex]);
+
+  return (
+    <section className="relative h-[85vh] w-full overflow-hidden bg-foreground">
+      <div 
+        className="flex h-full w-full transition-transform duration-700 ease-in-out"
+        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+      >
+        {carouselImages.map((image) => (
+          <div key={image.id} className="h-full w-full flex-shrink-0 relative">
+            <img
+              src={image.url}
+              alt={image.title.replace('\n', ' ')}
+              className="absolute inset-0 w-full h-full object-cover opacity-60"
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="relative z-10 text-center px-4">
+                <p className="text-xs font-body font-medium tracking-[0.3em] uppercase text-primary-foreground/70 mb-4 animate-fade-in">
+                  {image.subtitle}
+                </p>
+                <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6 animate-fade-in whitespace-pre-line" style={{ animationDelay: "0.1s" }}>
+                  {image.title}
+                </h1>
+                <Link to="/collection" className="inline-flex items-center gap-3 btn-hero animate-fade-in" style={{ animationDelay: "0.2s" }}>
+                  {image.cta}
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Navigation Controls */}
+      <div className="absolute bottom-8 left-0 right-0 z-20 flex flex-col items-center gap-4">
+        {/* Arrows */}
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={prevSlide}
+            className="p-3 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all border border-white/20"
+            aria-label="Previous image"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <button 
+            onClick={nextSlide}
+            className="p-3 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all border border-white/20"
+            aria-label="Next image"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </div>
+        
+        {/* Dot Indicators */}
+        <div className="flex items-center gap-2">
+          {carouselImages.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`transition-all duration-300 rounded-full ${
+                currentIndex === index 
+                  ? "w-8 h-1.5 bg-white" 
+                  : "w-2 h-1.5 bg-white/40 hover:bg-white/60"
+              }`}
+              aria-label={`Go to image ${index + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const Home = () => {
   const { data: allProducts, isLoading: productsLoading } = useQuery({
     queryKey: ['products'],
@@ -146,24 +278,8 @@ const Home = () => {
 
   return (
     <Layout>
-      {/* Hero */}
-      <section className="relative h-[85vh] flex items-center justify-center overflow-hidden bg-foreground">
-        <img
-          src="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1600&q=80"
-          alt="Men's fashion hero"
-          className="absolute inset-0 w-full h-full object-cover opacity-60"
-        />
-        <div className="relative z-10 text-center px-4">
-          <p className="text-xs font-body font-medium tracking-[0.3em] uppercase text-primary-foreground/70 mb-4 animate-fade-in">New Season Collection</p>
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-            Redefine Your<br />Style
-          </h1>
-          <Link to="/collection" className="inline-flex items-center gap-3 btn-hero animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            Shop New Arrivals
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-      </section>
+      {/* Hero Carousel */}
+      <HeroCarousel />
 
       {/* The Collections - Dynamic Bento Grid */}
       <section className="container max-w-7xl mx-auto px-4 lg:px-8 py-20 md:py-32 overflow-hidden animate-fade-in">

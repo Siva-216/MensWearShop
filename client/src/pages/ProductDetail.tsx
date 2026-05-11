@@ -351,7 +351,11 @@ const ProductDetail = () => {
         </div>
 
         {/* Reviews Section */}
-        <ReviewSection productId={product.id} />
+        <ReviewSection 
+          productId={product.id} 
+          productName={product.name}
+          productImage={product.images && product.images.length > 0 ? product.images[0] : ""}
+        />
 
         {/* Complete the Look */}
         {related.length > 0 && (

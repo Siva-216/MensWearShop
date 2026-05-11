@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Package, Settings as SettingsIcon, Heart, FileText, LogOut, Edit2, AlertCircle, MapPin, Phone, ShoppingBag, Cpu, Truck, CheckCircle, ChevronLeft, CreditCard, Plus, Star, Trash2 } from "lucide-react";
+import { User, Package, Heart, FileText, LogOut, Edit2, MapPin, Phone, ShoppingBag, Cpu, Truck, CheckCircle, ChevronLeft, CreditCard, Plus, Star, Trash2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import ReviewModal from "@/components/ReviewModal";
 import { api } from "@/lib/api";
@@ -50,7 +50,6 @@ const Profile = () => {
     ...(!isAdmin ? [{ id: "orders", label: "Orders", icon: Package, path: "/profile/orders" }] : []),
     ...(!isAdmin ? [{ id: "reviews", label: "My Reviews", icon: Star, path: "/profile/reviews" }] : []),
     { id: "info", label: "User Info", icon: FileText, path: "/profile/info" },
-    { id: "settings", label: "Settings", icon: SettingsIcon, path: "/profile/settings" },
   ];
 
   return (
@@ -104,7 +103,6 @@ const Profile = () => {
               {!isAdmin && <Route path="orders/:orderId" element={<OrdersTab orders={user.orders} user={user} />} />}
               {!isAdmin && <Route path="reviews" element={<MyReviewsTab userId={user.id || user._id} userName={user.fullName || user.name} />} />}
               <Route path="info" element={<UserInfoTab storedUser={user} />} />
-              <Route path="settings" element={<SettingsTab />} />
             </Routes>
           </div>
 
@@ -743,72 +741,42 @@ const UserInfoTab = ({ storedUser }: { storedUser: UserData }) => {
           )}
         </div>
       )}
-    </div>
-  );
-};
 
-const SettingsTab = () => {
-  const { deleteAccount } = useAuth();
-  const navigate = useNavigate();
-
-  const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-      const success = await deleteAccount();
-      if (success) {
-        toast.success("Account deleted successfully.");
-        navigate("/");
-      } else {
-        toast.error("Failed to delete account.");
-      }
-    }
-  };
-
-  const handlePasswordChange = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Password updated successfully!");
-  };
-
-  return (
-    <div className="animate-fade-in space-y-12 max-w-2xl">
-      <div>
-        <h2 className="font-display text-2xl font-bold mb-6">Change Password</h2>
-        <form onSubmit={handlePasswordChange} className="space-y-4 p-8 border border-border bg-card shadow-sm relative">
-          <div className="absolute top-0 left-0 w-full h-1 bg-foreground" />
-          <div className="grid grid-cols-1 gap-5">
-            <div>
-              <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Current Password</label>
-              <input type="password" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+      {/* Change Password Section */}
+      <div className="pt-8 border-t border-border/50">
+        <h2 className="font-display text-3xl font-bold mb-8">Security</h2>
+        <div className="max-w-2xl">
+          <h3 className="font-display text-xl font-bold mb-6">Change Password</h3>
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              toast.success("Password updated successfully!");
+            }} 
+            className="space-y-4 p-8 border border-border bg-card shadow-sm relative"
+          >
+            <div className="absolute top-0 left-0 w-full h-1 bg-foreground" />
+            <div className="grid grid-cols-1 gap-5">
+              <div>
+                <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Current Password</label>
+                <input type="password" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">New Password</label>
+                <input type="password" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Confirm New Password</label>
+                <input type="password" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">New Password</label>
-              <input type="password" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-body font-bold tracking-widest uppercase mb-2 text-muted-foreground">Confirm New Password</label>
-              <input type="password" required className="w-full h-12 px-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors font-body text-sm" />
-            </div>
-          </div>
-          <button type="submit" className="btn-hero py-4 px-10 text-xs font-bold uppercase tracking-widest mt-4">Update Password</button>
-        </form>
-      </div>
-
-      <div>
-        <h2 className="font-display text-2xl font-bold mb-6 text-red-600 flex items-center gap-2">
-          <AlertCircle size={24} /> Danger Zone
-        </h2>
-        <div className="p-8 border border-red-200 bg-red-50/30">
-          <h3 className="font-bold text-lg mb-2">Delete Account</h3>
-          <p className="text-sm font-body text-secondary-foreground/70 mb-8 leading-relaxed">
-            Once you delete your account, there is no going back. Please be certain. All your data, order history, and saved items will be permanently removed.
-          </p>
-          <button onClick={handleDelete} className="bg-red-600 text-white font-bold tracking-widest uppercase text-xs px-8 py-4 hover:bg-red-700 transition-all duration-300 shadow-md active:scale-95">
-            Delete My Account
-          </button>
+            <button type="submit" className="btn-hero py-4 px-10 text-xs font-bold uppercase tracking-widest mt-4">Update Password</button>
+          </form>
         </div>
       </div>
     </div>
   );
 };
+
 // ... existing components ...
 
 const MyReviewsTab = ({ userId, userName }: { userId: string, userName: string }) => {
