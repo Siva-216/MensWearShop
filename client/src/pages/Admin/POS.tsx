@@ -220,21 +220,21 @@ const POSPage: React.FC = () => {
 
   if (showCart) {
     return (
-      <div className="fixed inset-0 z-[100] bg-[#f8f9fb] flex flex-col h-screen animate-in fade-in duration-500 overflow-hidden font-body">
+      <div className="fixed inset-0 z-[100] bg-[#f8f9fb] flex flex-col h-screen animate-in fade-in duration-500 overflow-y-auto lg:overflow-hidden font-body">
         {/* Header */}
-        <div className="h-16 bg-white border-b px-8 flex items-center justify-between shrink-0">
+        <div className="h-16 bg-white border-b px-4 md:px-8 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
              <ShoppingCart size={20} className="text-primary" />
-             <h1 className="text-lg font-black">{isCheckout ? 'Checkout Confirmation' : 'Staff Sales Cart'}</h1>
+             <h1 className="text-base md:text-lg font-black">{isCheckout ? 'Checkout Confirmation' : 'Staff Sales Cart'}</h1>
           </div>
-          <button onClick={() => { if (isCheckout) setIsCheckout(false); else setShowCart(false); }} className="flex items-center gap-2 text-sm font-bold opacity-60 hover:opacity-100 uppercase tracking-widest transition-all">
+          <button onClick={() => { if (isCheckout) setIsCheckout(false); else setShowCart(false); }} className="flex items-center gap-2 text-xs md:text-sm font-bold opacity-60 hover:opacity-100 uppercase tracking-widest transition-all">
             <ArrowLeft size={16} /> {isCheckout ? 'Edit Cart' : 'Back to Store'}
           </button>
         </div>
 
-        <div className="flex-1 flex flex-col lg:flex-row gap-6 md:gap-8 p-4 md:p-10 overflow-hidden container mx-auto">
+        <div className="flex-1 flex flex-col lg:flex-row gap-6 md:gap-8 p-4 md:p-10 overflow-y-auto lg:overflow-hidden container mx-auto">
           {/* Main Content Area */}
-          <div className="flex-[2] flex flex-col overflow-hidden bg-white rounded-2xl md:rounded-3xl shadow-sm border border-black/5 p-4 md:p-8 relative">
+          <div className="flex-[2] flex flex-col overflow-visible lg:overflow-hidden bg-white rounded-2xl md:rounded-3xl shadow-sm border border-black/5 p-4 md:p-8 relative">
             {!isCheckout ? (
               /* THE CART VIEW */
               <div className="flex flex-col h-full">

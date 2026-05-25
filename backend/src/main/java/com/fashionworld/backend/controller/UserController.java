@@ -43,8 +43,7 @@ public class UserController {
             User registeredUser = userService.register(user);
             
             // Send welcome email
-            emailService.sendSimpleEmail(registeredUser.getEmail(), "Welcome to FashionWorld!", 
-                "Hello " + registeredUser.getName() + ",\n\nWelcome to FashionWorld! We're thrilled to have you as part of our community. Explore our latest collections and enjoy a seamless shopping experience.");
+            emailService.sendWelcomeEmail(registeredUser.getEmail(), registeredUser.getName());
             
             return ResponseEntity.ok(registeredUser);
         } catch (Exception e) {
@@ -59,6 +58,44 @@ public class UserController {
             return ResponseEntity.ok(loggedInUser);
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Invalid credentials: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody java.util.Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            if (email == null || email.isEmpty()) {
+                return ResponseEntity.badRequest().body("Email is required");
+            }
+            String token = userService.generateResetToken(email);
+            
+            // Fetch name of the user to personalize the email
+            String name = userService.findByEmail(email).map(User::getName).orElse("Valued Customer");
+            
+            // Reset link pointing to frontend URL
+            String resetUrl = "http://localhost:5173/reset-password?token=" + token;
+            
+            emailService.sendForgotPasswordEmail(email, name, resetUrl);
+            return ResponseEntity.ok(java.util.Map.of("message", "Password reset link sent to your email."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody java.util.Map<String, String> request) {
+        try {
+            String token = request.get("token");
+            String password = request.get("password");
+            if (token == null || token.isEmpty() || password == null || password.isEmpty()) {
+                return ResponseEntity.badRequest().body("Token and password are required");
+            }
+            
+            userService.resetPassword(token, password);
+            return ResponseEntity.ok(java.util.Map.of("message", "Password reset successfully."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

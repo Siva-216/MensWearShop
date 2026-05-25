@@ -82,4 +82,34 @@ public class UserService {
         }
         userRepository.deleteById(id);
     }
+
+    public String generateResetToken(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+        String token = java.util.UUID.randomUUID().toString();
+        user.setResetToken(token);
+        
+        // Expiry set to 1 hour from now
+        long ONE_HOUR_IN_MS = 3600000;
+        user.setResetTokenExpiry(new java.util.Date(System.currentTimeMillis() + ONE_HOUR_IN_MS));
+
+        userRepository.save(user);
+        return token;
+    }
+
+    public void resetPassword(String token, String newPassword) {
+        User user = userRepository.findByResetToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid password reset token"));
+
+        if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().before(new java.util.Date())) {
+            throw new RuntimeException("Password reset token has expired");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
+
+        userRepository.save(user);
+    }
 }

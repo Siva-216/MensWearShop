@@ -38,6 +38,30 @@ export const api = {
     getProfile: (id: string) => fetch(`${BASE_URL}/users/profile/${id}`, {
       headers: getHeaders(),
     }).then(res => res.json()),
+
+    forgotPassword: (email: string) => fetch(`${BASE_URL}/users/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }).then(async res => {
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Failed to send reset link');
+      }
+      return res.json();
+    }),
+
+    resetPassword: (data: any) => fetch(`${BASE_URL}/users/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then(async res => {
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Failed to reset password');
+      }
+      return res.json();
+    }),
   },
 
   users: {

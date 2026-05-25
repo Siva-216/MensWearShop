@@ -246,60 +246,62 @@ const Dashboard: React.FC = () => {
           </div>
           <Button variant="outline" size="sm">View All</Button>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-muted/50">
-                <TableHead className="w-[100px] font-bold text-foreground">Order ID</TableHead>
-                <TableHead className="font-bold text-foreground">Customer</TableHead>
-                <TableHead className="font-bold text-foreground">Product</TableHead>
-                <TableHead className="font-bold text-foreground">Amount</TableHead>
-                <TableHead className="font-bold text-foreground">Status</TableHead>
-                <TableHead className="font-bold text-foreground">Date</TableHead>
-                <TableHead className="text-right"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentOrders.map((order: any) => (
-                <TableRow key={order.id} className="group border-muted/50 transition-colors">
-                  <TableCell className="font-medium">#{order.orderId?.substring(0, 8)}</TableCell>
-                  <TableCell>{order.shippingAddress?.name || 'Customer'}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{order.items?.[0]?.productName || 'Multiple items'}{order.items?.length > 1 ? ` (+${order.items.length - 1})` : ''}</TableCell>
-                  <TableCell className="font-semibold">₹{order.totalAmount?.toLocaleString('en-IN')}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant="secondary"
-                      className={`${
-                        order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
-                        order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
-                        order.status === 'Placed' ? 'bg-amber-100 text-amber-700' :
-                        'bg-red-100 text-red-700'
-                      } border-none font-medium px-2.5 py-0.5 rounded-full`}
-                    >
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                          <MoreVertical size={16} />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Update Status</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Archive</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        <CardContent className="p-0 md:p-6 overflow-x-auto scrollbar-hide">
+          <div className="min-w-[750px] md:min-w-full">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-muted/50">
+                  <TableHead className="w-[100px] font-bold text-foreground">Order ID</TableHead>
+                  <TableHead className="font-bold text-foreground">Customer</TableHead>
+                  <TableHead className="font-bold text-foreground">Product</TableHead>
+                  <TableHead className="font-bold text-foreground">Amount</TableHead>
+                  <TableHead className="font-bold text-foreground">Status</TableHead>
+                  <TableHead className="font-bold text-foreground">Date</TableHead>
+                  <TableHead className="text-right"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {recentOrders.map((order: any) => (
+                  <TableRow key={order.id} className="group border-muted/50 transition-colors">
+                    <TableCell className="font-medium">#{order.orderId?.substring(0, 8)}</TableCell>
+                    <TableCell>{order.shippingAddress?.name || 'Customer'}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">{order.items?.[0]?.productName || 'Multiple items'}{order.items?.length > 1 ? ` (+${order.items.length - 1})` : ''}</TableCell>
+                    <TableCell className="font-semibold">₹{order.totalAmount?.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="secondary"
+                        className={`${
+                          order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
+                          order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
+                          order.status === 'Placed' ? 'bg-amber-100 text-amber-700' :
+                          'bg-red-100 text-red-700'
+                        } border-none font-medium px-2.5 py-0.5 rounded-full`}
+                      >
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreVertical size={16} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>View Details</DropdownMenuItem>
+                          <DropdownMenuItem>Update Status</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">Archive</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

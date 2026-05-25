@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.fashionworld.backend.model.Order;
 import com.fashionworld.backend.model.Product;
 import com.fashionworld.backend.model.ProductVariant;
+import com.fashionworld.backend.model.User;
 import com.fashionworld.backend.repository.OrderRepository;
 import com.fashionworld.backend.repository.ProductRepository;
 import com.fashionworld.backend.repository.UserRepository;
@@ -112,20 +113,83 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
         
         // Notify user about order creation
-        notifyUser(savedOrder, "Your Order " + savedOrder.getOrderId() + " Placed Successfully!", 
-            "Hello,\n\nYour order " + savedOrder.getOrderId() + " has been placed successfully. Thank you for shopping with FashionWorld!");
+        sendOrderPlacedNotification(savedOrder);
         
         return savedOrder;
     }
 
-    private void notifyUser(Order order, String subject, String body) {
+    private void sendOrderPlacedNotification(Order order) {
+        String email = null;
+        String name = "Valued Customer";
+        
         if (order.getUserId() != null) {
-            userRepository.findById(order.getUserId()).ifPresent(user -> {
-                emailService.sendSimpleEmail(user.getEmail(), subject, body);
-            });
-        } else if (order.getCustomerEmail() != null && !order.getCustomerEmail().isEmpty()) {
-            // For offline orders without a registered user account
-            emailService.sendSimpleEmail(order.getCustomerEmail(), subject, body);
+            Optional<User> userOpt = userRepository.findById(order.getUserId());
+            if (userOpt.isPresent()) {
+                email = userOpt.get().getEmail();
+                name = userOpt.get().getName();
+            }
+        }
+        
+        if (email == null && order.getCustomerEmail() != null && !order.getCustomerEmail().isEmpty()) {
+            email = order.getCustomerEmail();
+            name = order.getCustomerName() != null ? order.getCustomerName() : "Valued Customer";
+        }
+        
+        if (email != null && !email.isEmpty()) {
+            emailService.sendOrderPlacedEmail(email, order, name);
+        }
+    }
+
+    private void sendOrderDeliveredNotification(Order order) {
+        String email = null;
+        String name = "Valued Customer";
+        
+        if (order.getUserId() != null) {
+            Optional<User> userOpt = userRepository.findById(order.getUserId());
+            if (userOpt.isPresent()) {
+                email = userOpt.get().getEmail();
+                name = userOpt.get().getName();
+            }
+        }
+        
+        if (email == null && order.getCustomerEmail() != null && !order.getCustomerEmail().isEmpty()) {
+            email = order.getCustomerEmail();
+            name = order.getCustomerName() != null ? order.getCustomerName() : "Valued Customer";
+        }
+        
+        if (email != null && !email.isEmpty()) {
+            emailService.sendOrderDeliveredEmail(email, order, name);
+        }
+    }
+
+    private void sendOrderStatusUpdateNotification(Order order, String status) {
+        String email = null;
+        String name = "Valued Customer";
+        
+        if (order.getUserId() != null) {
+            Optional<User> userOpt = userRepository.findById(order.getUserId());
+            if (userOpt.isPresent()) {
+                email = userOpt.get().getEmail();
+                name = userOpt.get().getName();
+            }
+        }
+        
+        if (email == null && order.getCustomerEmail() != null && !order.getCustomerEmail().isEmpty()) {
+            email = order.getCustomerEmail();
+            name = order.getCustomerName() != null ? order.getCustomerName() : "Valued Customer";
+        }
+        
+        if (email != null && !email.isEmpty()) {
+            String subject = "Order Update: " + order.getOrderId();
+            String htmlContent = emailService.getBaseEmailTemplate(
+                "Order Status Updated",
+                "<h2>Order Status: " + status + "</h2>" +
+                "<p>Hello " + name + ",</p>" +
+                "<p>The status of your order <strong>#" + order.getOrderId() + "</strong> has been updated to: <span style='font-weight: bold; color: #111827;'>" + status + "</span>.</p>",
+                "View Order Details",
+                "http://localhost:5173/track-order?id=" + order.getOrderId()
+            );
+            emailService.sendHtmlEmail(email, subject, htmlContent);
         }
     }
 
@@ -199,8 +263,11 @@ public class OrderService {
             Order updatedOrder = orderRepository.save(order);
 
             // Notify user about status update
-            notifyUser(updatedOrder, "Order Update: " + updatedOrder.getOrderId(), 
-                "Hello,\n\nYour order " + updatedOrder.getOrderId() + " status has been updated to: " + status + ".");
+            if (status.equalsIgnoreCase("Delivered") || status.equalsIgnoreCase("Completed")) {
+                sendOrderDeliveredNotification(updatedOrder);
+            } else {
+                sendOrderStatusUpdateNotification(updatedOrder, status);
+            }
             
             return updatedOrder;
         }

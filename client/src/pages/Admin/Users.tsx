@@ -255,121 +255,123 @@ const UsersPage: React.FC = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-muted/30 h-14 bg-muted/20">
-                <TableHead className="w-[80px] pl-6"></TableHead>
-                <TableHead className="font-bold text-foreground">User Name</TableHead>
-                <TableHead className="font-bold text-foreground">Email</TableHead>
-                <TableHead className="font-bold text-foreground">Role</TableHead>
-                <TableHead className="font-bold text-foreground">Status</TableHead>
-                <TableHead className="text-right pr-6">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground animate-pulse">
-                      <RefreshCw className="animate-spin" size={16} />
-                      Loading users...
-                    </div>
-                  </TableCell>
+        <CardContent className="p-0 overflow-x-auto scrollbar-hide">
+          <div className="min-w-[850px] lg:min-w-full">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-muted/30 h-14 bg-muted/20">
+                  <TableHead className="w-[80px] pl-6"></TableHead>
+                  <TableHead className="font-bold text-foreground">User Name</TableHead>
+                  <TableHead className="font-bold text-foreground">Email</TableHead>
+                  <TableHead className="font-bold text-foreground">Role</TableHead>
+                  <TableHead className="font-bold text-foreground">Status</TableHead>
+                  <TableHead className="text-right pr-6">Actions</TableHead>
                 </TableRow>
-              ) : paginatedUsers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                    No users found matching your criteria.
-                  </TableCell>
-                </TableRow>
-              ) : paginatedUsers.map((user: any) => (
-                <TableRow key={user.id} className="group border-muted/20 transition-colors">
-                  <TableCell className="pl-6">
-                    <Avatar className="h-10 w-10 ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
-                      <AvatarImage src={`https://i.pravatar.cc/150?u=${user.id}`} />
-                      <AvatarFallback className="font-bold bg-muted/50">{(user.name || 'U').split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-semibold text-foreground">{user.name}</div>
-                    <div className="text-xs text-muted-foreground font-medium md:hidden">{user.email}</div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {isAdmin ? (
-                        <Select 
-                          defaultValue={user.role} 
-                          onValueChange={(val) => handleRoleChange(user.id, val)}
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground animate-pulse">
+                        <RefreshCw className="animate-spin" size={16} />
+                        Loading users...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                      No users found matching your criteria.
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedUsers.map((user: any) => (
+                  <TableRow key={user.id} className="group border-muted/20 transition-colors">
+                    <TableCell className="pl-6">
+                      <Avatar className="h-10 w-10 ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
+                        <AvatarImage src={`https://i.pravatar.cc/150?u=${user.id}`} />
+                        <AvatarFallback className="font-bold bg-muted/50">{(user.name || 'U').split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-foreground">{user.name}</div>
+                      <div className="text-xs text-muted-foreground font-medium md:hidden">{user.email}</div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {isAdmin ? (
+                          <Select 
+                            defaultValue={user.role} 
+                            onValueChange={(val) => handleRoleChange(user.id, val)}
+                          >
+                            <SelectTrigger className="h-9 w-[130px] bg-muted/30 border-none shadow-none font-semibold focus:ring-1 focus:ring-primary">
+                              <div className="flex items-center gap-2 overflow-hidden truncate">
+                                 {user.role === 'admin' ? <ShieldCheck size={14} className="text-blue-500 shrink-0" /> : 
+                                  user.role === 'staff' ? <Shield size={14} className="text-amber-500 shrink-0" /> : 
+                                  <User size={14} className="text-slate-400 shrink-0" />}
+                                 <SelectValue placeholder="Role" />
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl border-muted-foreground/10">
+                              <SelectItem value="admin" className="font-bold capitalize">Admin</SelectItem>
+                              <SelectItem value="staff" className="font-bold capitalize text-amber-600">Staff</SelectItem>
+                              <SelectItem value="user" className="font-bold capitalize text-slate-500">User</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 rounded-lg text-sm font-semibold opacity-80 cursor-not-allowed capitalize">
+                            {user.role === 'admin' ? (
+                              <ShieldCheck size={16} className="text-blue-500" />
+                            ) : user.role === 'staff' ? (
+                              <Shield size={16} className="text-amber-500" />
+                            ) : (
+                              <User size={16} className="text-slate-400" />
+                            )}
+                            <span className="font-medium">{user.role}</span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        className="bg-green-100 text-green-700 hover:bg-green-200 border-none font-semibold px-3 py-1 rounded-full text-[11px] uppercase tracking-wide transition-colors"
+                      >
+                        Active
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 rounded-full text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
+                          onClick={() => handleOpenViewModal(user)}
                         >
-                          <SelectTrigger className="h-9 w-[130px] bg-muted/30 border-none shadow-none font-semibold focus:ring-1 focus:ring-primary">
-                            <div className="flex items-center gap-2 overflow-hidden truncate">
-                               {user.role === 'admin' ? <ShieldCheck size={14} className="text-blue-500 shrink-0" /> : 
-                                user.role === 'staff' ? <Shield size={14} className="text-amber-500 shrink-0" /> : 
-                                <User size={14} className="text-slate-400 shrink-0" />}
-                               <SelectValue placeholder="Role" />
-                            </div>
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl border-muted-foreground/10">
-                            <SelectItem value="admin" className="font-bold capitalize">Admin</SelectItem>
-                            <SelectItem value="staff" className="font-bold capitalize text-amber-600">Staff</SelectItem>
-                            <SelectItem value="user" className="font-bold capitalize text-slate-500">User</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 rounded-lg text-sm font-semibold opacity-80 cursor-not-allowed capitalize">
-                          {user.role === 'admin' ? (
-                            <ShieldCheck size={16} className="text-blue-500" />
-                          ) : user.role === 'staff' ? (
-                            <Shield size={16} className="text-amber-500" />
-                          ) : (
-                            <User size={16} className="text-slate-400" />
-                          )}
-                          <span className="font-medium">{user.role}</span>
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      className="bg-green-100 text-green-700 hover:bg-green-200 border-none font-semibold px-3 py-1 rounded-full text-[11px] uppercase tracking-wide transition-colors"
-                    >
-                      Active
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right pr-6">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-full text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
-                        onClick={() => handleOpenViewModal(user)}
-                      >
-                        <Eye size={16} />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-full text-muted-foreground hover:text-amber-600 hover:bg-amber-50"
-                        onClick={() => handleOpenEditModal(user)}
-                      >
-                        <Edit2 size={16} />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-full text-muted-foreground hover:text-red-600 hover:bg-red-50"
-                        onClick={() => handleDelete(user.id)}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                          <Eye size={16} />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 rounded-full text-muted-foreground hover:text-amber-600 hover:bg-amber-50"
+                          onClick={() => handleOpenEditModal(user)}
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 rounded-full text-muted-foreground hover:text-red-600 hover:bg-red-50"
+                          onClick={() => handleDelete(user.id)}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
       

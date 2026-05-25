@@ -186,111 +186,113 @@ const OrdersPage: React.FC = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-muted/30 bg-muted/5 h-14">
-                <TableHead className="w-[120px] pl-6 font-bold text-foreground uppercase text-[11px] tracking-widest">Order ID</TableHead>
-                <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Customer</TableHead>
-                <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Items</TableHead>
-                <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Amount</TableHead>
-                <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Method</TableHead>
-                <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Status</TableHead>
-                <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Date</TableHead>
-                <TableHead className="text-right pr-6"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground animate-pulse">
-                      <RefreshCw className="animate-spin" size={16} />
-                      Loading orders...
-                    </div>
-                  </TableCell>
+        <CardContent className="p-0 overflow-x-auto scrollbar-hide">
+          <div className="min-w-[950px] lg:min-w-full">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-muted/30 bg-muted/5 h-14">
+                  <TableHead className="w-[120px] pl-6 font-bold text-foreground uppercase text-[11px] tracking-widest">Order ID</TableHead>
+                  <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Customer</TableHead>
+                  <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Items</TableHead>
+                  <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Amount</TableHead>
+                  <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Method</TableHead>
+                  <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Status</TableHead>
+                  <TableHead className="font-bold text-foreground uppercase text-[11px] tracking-widest">Date</TableHead>
+                  <TableHead className="text-right pr-6"></TableHead>
                 </TableRow>
-              ) : (filteredOrders).map((order: any) => {
-                const isOfflineOrder = getIsOfflineOrder(order);
-                return (
-                <TableRow key={order.id} className="group border-muted/20 hover:bg-muted/5 transition-colors">
-                  <TableCell className="pl-6 font-bold text-primary">#{order.orderId?.substring(0, 8)}</TableCell>
-                  <TableCell>
-                    {isOfflineOrder ? (
-                      <>
-                        <div className="font-semibold text-foreground flex items-center gap-2">
-                          {order.customerName || 'Store Customer'}
-                          <Badge variant="outline" className="text-[9px] h-4 px-1 bg-muted/50 border-none font-bold uppercase">Store</Badge>
-                        </div>
-                        <div className="text-[11px] text-muted-foreground font-medium">{order.customerPhone || 'Walk-in'}</div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="font-semibold text-foreground">{order.shippingAddress?.name || 'Customer'}</div>
-                        <div className="text-[11px] text-muted-foreground font-medium">{order.shippingAddress?.email || 'No email'}</div>
-                      </>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5 font-medium text-muted-foreground">
-                      <ShoppingBag size={14} className="text-foreground/40" />
-                      {order.items?.length || 0} items
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-bold text-foreground">₹{order.totalAmount?.toLocaleString('en-IN')}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                      <CreditCard size={14} className="text-foreground/40" />
-                      {order.paymentMethod}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      className={`${
-                        order.status === 'Delivered' || order.status === 'Completed' ? 'bg-green-50 text-green-700 hover:bg-green-100' :
-                        order.status === 'Shipped' ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' :
-                        order.status === 'Placed' ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' :
-                        'bg-red-50 text-red-700 hover:bg-red-100'
-                      } border-none font-bold px-3 py-1 rounded-full text-[10px] uppercase shadow-sm transition-all`}
-                    >
-                      {(order.status === 'Delivered' || order.status === 'Completed') && <CheckCircle2 size={10} className="mr-1 inline" />}
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground font-medium text-xs">
-                    {order.createdAt ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(order.createdAt)) : 'April 6, 2026'}
-                  </TableCell>
-                  <TableCell className="text-right pr-6">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleViewDetails(order)}
-                        className="h-8 w-8 rounded-full hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground animate-pulse">
+                        <RefreshCw className="animate-spin" size={16} />
+                        Loading orders...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (filteredOrders).map((order: any) => {
+                  const isOfflineOrder = getIsOfflineOrder(order);
+                  return (
+                  <TableRow key={order.id} className="group border-muted/20 hover:bg-muted/5 transition-colors">
+                    <TableCell className="pl-6 font-bold text-primary">#{order.orderId?.substring(0, 8)}</TableCell>
+                    <TableCell>
+                      {isOfflineOrder ? (
+                        <>
+                          <div className="font-semibold text-foreground flex items-center gap-2">
+                            {order.customerName || 'Store Customer'}
+                            <Badge variant="outline" className="text-[9px] h-4 px-1 bg-muted/50 border-none font-bold uppercase">Store</Badge>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground font-medium">{order.customerPhone || 'Walk-in'}</div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="font-semibold text-foreground">{order.shippingAddress?.name || 'Customer'}</div>
+                          <div className="text-[11px] text-muted-foreground font-medium">{order.shippingAddress?.email || 'No email'}</div>
+                        </>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 font-medium text-muted-foreground">
+                        <ShoppingBag size={14} className="text-foreground/40" />
+                        {order.items?.length || 0} items
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-bold text-foreground">₹{order.totalAmount?.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                        <CreditCard size={14} className="text-foreground/40" />
+                        {order.paymentMethod}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        className={`${
+                          order.status === 'Delivered' || order.status === 'Completed' ? 'bg-green-50 text-green-700 hover:bg-green-100' :
+                          order.status === 'Shipped' ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' :
+                          order.status === 'Placed' ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' :
+                          'bg-red-50 text-red-700 hover:bg-red-100'
+                        } border-none font-bold px-3 py-1 rounded-full text-[10px] uppercase shadow-sm transition-all`}
                       >
-                        <Eye size={16} />
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted">
-                            <MoreVertical size={16} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Order Placed')}>Mark as Order Placed</DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Processing')}>Mark as Processing</DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Out for Delivery')}>Mark as Out for Delivery</DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Delivered')}>Mark as Delivered</DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="gap-2 text-red-600" onClick={() => handleStatusUpdate(order.id, 'Cancelled')}>Cancel Order</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );})}
-            </TableBody>
-          </Table>
+                        {(order.status === 'Delivered' || order.status === 'Completed') && <CheckCircle2 size={10} className="mr-1 inline" />}
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground font-medium text-xs">
+                      {order.createdAt ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(order.createdAt)) : 'April 6, 2026'}
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleViewDetails(order)}
+                          className="h-8 w-8 rounded-full hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Eye size={16} />
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted">
+                              <MoreVertical size={16} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Order Placed')}>Mark as Order Placed</DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Processing')}>Mark as Processing</DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Out for Delivery')}>Mark as Out for Delivery</DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2" onClick={() => handleStatusUpdate(order.id, 'Delivered')}>Mark as Delivered</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="gap-2 text-red-600" onClick={() => handleStatusUpdate(order.id, 'Cancelled')}>Cancel Order</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );})}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -298,23 +300,23 @@ const OrdersPage: React.FC = () => {
 
   const renderOrderDetail = () => (
     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-      <div className="flex items-center justify-between bg-white p-6 rounded-3xl border shadow-sm">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => setViewMode('list')} className="rounded-full h-12 w-12 hover:bg-muted group">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 md:p-6 rounded-3xl border shadow-sm gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
+          <Button variant="ghost" size="icon" onClick={() => setViewMode('list')} className="rounded-full h-10 w-10 md:h-12 md:w-12 hover:bg-muted group shrink-0">
             <ChevronLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
           </Button>
           <div>
-            <h2 className="text-2xl font-display font-black tracking-tight">Order Details</h2>
-            <p className="text-muted-foreground text-sm flex items-center gap-2">
+            <h2 className="text-xl md:text-2xl font-display font-black tracking-tight">Order Details</h2>
+            <p className="text-muted-foreground text-xs md:text-sm flex items-center gap-2">
                 <Hash size={14} /> {selectedOrder.orderId}
             </p>
           </div>
         </div>
-        <div className="flex gap-3">
-            <Button variant="outline" className="rounded-full px-6 h-11 gap-2 font-bold select-none border-2">
+        <div className="flex flex-wrap gap-2 md:gap-3 w-full sm:w-auto">
+            <Button variant="outline" className="rounded-full px-4 md:px-6 h-10 md:h-11 gap-2 font-bold select-none border-2 text-xs md:text-sm flex-1 sm:flex-none">
                 <Printer size={18} /> Print Invoice
             </Button>
-            <Button className="rounded-full px-6 h-11 font-black gap-2 bg-primary">
+            <Button className="rounded-full px-4 md:px-6 h-10 md:h-11 font-black gap-2 bg-primary text-xs md:text-sm flex-1 sm:flex-none">
                 Mark as Shipped
             </Button>
         </div>
@@ -334,37 +336,39 @@ const OrdersPage: React.FC = () => {
                         <Badge className="bg-primary/10 text-primary border-none font-black px-4">{selectedOrder.status}</Badge>
                     </div>
                 </CardHeader>
-                <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-muted/30 border-none h-12">
-                                <TableHead className="pl-8 uppercase text-[10px] font-black tracking-widest opacity-50">Item Description</TableHead>
-                                <TableHead className="text-center uppercase text-[10px] font-black tracking-widest opacity-50">Quantity</TableHead>
-                                <TableHead className="text-right uppercase text-[10px] font-black tracking-widest opacity-50">Price</TableHead>
-                                <TableHead className="text-right pr-8 uppercase text-[10px] font-black tracking-widest opacity-50">Total</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {selectedOrder.items?.map((item: any, idx: number) => (
-                                <TableRow key={idx} className="border-muted/20 hover:bg-muted/5 group">
-                                    <TableCell className="pl-8 py-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-14 h-14 rounded-2xl overflow-hidden bg-muted border flex-shrink-0 group-hover:scale-105 transition-transform">
-                                                <img src={item.image} className="w-full h-full object-cover" onError={(e: any) => e.target.src = 'https://placehold.co/100x100?text=Product'} />
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-sm text-foreground">{item.productName}</p>
-                                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Size: {item.selectedSize}</p>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-center font-bold text-muted-foreground">x{item.quantity}</TableCell>
-                                    <TableCell className="text-right font-medium text-muted-foreground">₹{item.price.toLocaleString('en-IN')}</TableCell>
-                                    <TableCell className="text-right pr-8 font-black text-foreground">₹{(item.price * item.quantity).toLocaleString('en-IN')}</TableCell>
+                <CardContent className="p-0 overflow-x-auto scrollbar-hide">
+                    <div className="min-w-[600px] md:min-w-full">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/30 border-none h-12">
+                                    <TableHead className="pl-8 uppercase text-[10px] font-black tracking-widest opacity-50">Item Description</TableHead>
+                                    <TableHead className="text-center uppercase text-[10px] font-black tracking-widest opacity-50">Quantity</TableHead>
+                                    <TableHead className="text-right uppercase text-[10px] font-black tracking-widest opacity-50">Price</TableHead>
+                                    <TableHead className="text-right pr-8 uppercase text-[10px] font-black tracking-widest opacity-50">Total</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {selectedOrder.items?.map((item: any, idx: number) => (
+                                    <TableRow key={idx} className="border-muted/20 hover:bg-muted/5 group">
+                                        <TableCell className="pl-8 py-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-14 h-14 rounded-2xl overflow-hidden bg-muted border flex-shrink-0 group-hover:scale-105 transition-transform">
+                                                    <img src={item.image} className="w-full h-full object-cover" onError={(e: any) => e.target.src = 'https://placehold.co/100x100?text=Product'} />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm text-foreground">{item.productName}</p>
+                                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Size: {item.selectedSize}</p>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-center font-bold text-muted-foreground">x{item.quantity}</TableCell>
+                                        <TableCell className="text-right font-medium text-muted-foreground">₹{item.price.toLocaleString('en-IN')}</TableCell>
+                                        <TableCell className="text-right pr-8 font-black text-foreground">₹{(item.price * item.quantity).toLocaleString('en-IN')}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
 

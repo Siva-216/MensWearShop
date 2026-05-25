@@ -53,10 +53,16 @@ const sidebarItems = [
 ];
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (window.innerWidth >= 1024) {
+      setIsSidebarOpen(true);
+    }
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -64,12 +70,22 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-muted/30 font-body">
+    <div className="flex h-screen bg-muted/30 font-body overflow-hidden">
+      {/* Sidebar Backdrop for Mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside 
-        className={`${
-          isSidebarOpen ? 'w-64' : 'w-20'
-        } transition-all duration-300 bg-card border-r flex flex-col fixed h-full z-50`}
+        className={`fixed inset-y-0 left-0 z-50 bg-card border-r flex flex-col transition-all duration-300 h-full ${
+          isSidebarOpen 
+            ? 'w-64 translate-x-0' 
+            : 'w-64 -translate-x-full lg:w-20 lg:translate-x-0'
+        }`}
       >
         <div className="p-6 flex items-center justify-between">
           <h1 className={`font-display font-bold text-xl tracking-tight transition-opacity duration-300 ${!isSidebarOpen && 'opacity-0 hidden'}`}>
@@ -90,6 +106,11 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={() => {
+                if (window.innerWidth < 1024) {
+                  setIsSidebarOpen(false);
+                }
+              }}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                 location.pathname === item.path
                   ? 'bg-primary text-primary-foreground shadow-md'
@@ -117,18 +138,28 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <main className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <main className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-20'} ml-0 overflow-hidden`}>
         {/* Top Navbar */}
-        <header className="h-16 bg-card border-b flex items-center justify-between px-8 sticky top-0 z-40">
-          <div className="relative w-96 max-w-[50%]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-            <Input 
-              placeholder="Search anything..." 
-              className="pl-10 bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary h-10 rounded-full"
-            />
+        <header className="h-16 bg-card border-b flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden text-muted-foreground shrink-0 h-10 w-10"
+            >
+              <Menu size={20} />
+            </Button>
+            <div className="relative w-40 sm:w-64 md:w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+              <Input 
+                placeholder="Search anything..." 
+                className="pl-10 bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary h-10 rounded-full w-full text-xs sm:text-sm"
+              />
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <Button variant="ghost" size="icon" className="relative group">
               <Bell size={20} className="text-muted-foreground group-hover:text-primary transition-colors" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-card"></span>
@@ -170,7 +201,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </header>
 
         {/* Content Area */}
-        <div className="p-8 overflow-auto">
+        <div className="p-4 md:p-8 overflow-auto flex-1">
           {children}
         </div>
       </main>

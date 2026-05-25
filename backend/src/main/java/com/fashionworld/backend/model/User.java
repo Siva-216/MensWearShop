@@ -23,6 +23,9 @@ public class User {
 
     private List<Address> addresses;
 
+    private String resetToken;
+    private java.util.Date resetTokenExpiry;
+
     @org.springframework.data.annotation.CreatedDate
     private java.util.Date createdAt;
     

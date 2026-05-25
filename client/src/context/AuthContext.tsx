@@ -151,6 +151,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await api.auth.register(userData);
       if (response && !response.error && response.id) {
+        localStorage.setItem('user', JSON.stringify(response));
+        setUser(mapUserFromBackend(response, []));
         return true;
       }
       return false;
