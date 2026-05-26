@@ -85,9 +85,18 @@ const ProductDetail = () => {
 
   const isPerfume = (product.categoryName || product.category || "").toLowerCase() === "perfume";
 
+  // Derive available colors and sizes from variants
+  const availableColors = isPerfume ? [] : (product.colors && product.colors.length > 0 ? product.colors : Array.from(new Set((product.variants || []).map((v: any) => v.color))).filter(Boolean) as string[]);
+  const availableSizes = product.sizes && product.sizes.length > 0 ? product.sizes : Array.from(new Set((product.variants || []).map((v: any) => v.size))).filter(Boolean) as string[];
+
+  // Whether this product actually has color variants (e.g. Pants/Shorts may not)
+  const hasColors = !isPerfume && availableColors.length > 0;
+
   // Find selected variant
   const selectedVariant = product.variants?.find((v: any) =>
-    isPerfume ? v.size === selectedSize : (v.size === selectedSize && v.color === selectedColor)
+    hasColors
+      ? v.size === selectedSize && v.color === selectedColor
+      : v.size === selectedSize
   );
 
   const currentPrice = product.discountPrice && product.discountPrice > 0 ? product.discountPrice : (selectedVariant?.price || product.price);
@@ -99,10 +108,6 @@ const ProductDetail = () => {
 
   const currentStock = selectedVariant ? selectedVariant.stock : product.stock;
   const isOutOfStock = currentStock <= 0;
-
-  // Derive available colors and sizes from variants if not present on product
-  const availableColors = isPerfume ? [] : (product.colors && product.colors.length > 0 ? product.colors : Array.from(new Set(product.variants?.map((v: any) => v.color))).filter(Boolean));
-  const availableSizes = product.sizes && product.sizes.length > 0 ? product.sizes : Array.from(new Set(product.variants?.map((v: any) => v.size))).filter(Boolean);
 
   const wishlisted = isInWishlist(product.id);
   const related = (allProducts || []).filter((p: any) => {
@@ -116,15 +121,15 @@ const ProductDetail = () => {
       toast.error("Sorry, this item is out of stock");
       return;
     }
-    if (!selectedSize || (!isPerfume && !selectedColor)) {
-      toast.error(isPerfume ? "Please select ml" : "Please select both size and color");
+    if (!selectedSize || (hasColors && !selectedColor)) {
+      toast.error(isPerfume ? "Please select volume" : hasColors ? "Please select both size and color" : "Please select a size");
       return;
     }
 
     addToCart(
       product,
       selectedSize,
-      isPerfume ? (selectedColor || "Standard") : selectedColor,
+      isPerfume ? (selectedColor || "Standard") : (hasColors ? selectedColor : "Standard"),
       selectedVariant?.sku,
       currentPrice
     );
@@ -306,14 +311,14 @@ const ProductDetail = () => {
             <div className="hidden lg:flex gap-3 mb-8">
               <button
                 onClick={handleAddToCart}
-                className={`flex-1 flex items-center justify-center gap-2 py-4 text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 ${isOutOfStock || !selectedSize || (!isPerfume && !selectedColor)
+                className={`flex-1 flex items-center justify-center gap-2 py-4 text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 ${isOutOfStock || !selectedSize || (hasColors && !selectedColor)
                     ? 'bg-muted text-muted-foreground cursor-not-allowed border border-border'
                     : 'btn-hero'
                   }`}
               >
                 {isOutOfStock ? (
                   "Out of Stock"
-                ) : !selectedSize || (!isPerfume && !selectedColor) ? (
+                ) : !selectedSize || (hasColors && !selectedColor) ? (
                   "Select Options"
                 ) : (
                   <>
@@ -330,12 +335,12 @@ const ProductDetail = () => {
             <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 glass-card z-40 flex gap-3 animate-fade-in shadow-[0_-4px_30px_rgba(0,0,0,0.1)]">
               <button
                 onClick={handleAddToCart}
-                className={`flex-1 flex items-center justify-center gap-2 py-4 btn-hero-primary ${isOutOfStock || !selectedSize || (!isPerfume && !selectedColor)
+                className={`flex-1 flex items-center justify-center gap-2 py-4 btn-hero-primary ${isOutOfStock || !selectedSize || (hasColors && !selectedColor)
                     ? 'bg-muted text-muted-foreground cursor-not-allowed border-none'
                     : ''
                   }`}
               >
-                {isOutOfStock ? "Sold Out" : !selectedSize || (!isPerfume && !selectedColor) ? "Select Options" : "Add to Cart"}
+                {isOutOfStock ? "Sold Out" : !selectedSize || (hasColors && !selectedColor) ? "Select Options" : "Add to Cart"}
               </button>
               <button onClick={handleWishlist} className={`w-12 h-12 border flex items-center justify-center transition-all bg-background active:scale-90 ${wishlisted ? "bg-foreground text-background border-foreground shadow-lg" : "border-border"}`}>
                 <Heart size={18} className={wishlisted ? "fill-current" : ""} />
