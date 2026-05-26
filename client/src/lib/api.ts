@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8082/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8082/api';
 
 const getHeaders = () => {
   return {
@@ -80,7 +80,7 @@ export const api = {
       method: 'DELETE',
       headers: getHeaders(),
     }).then(res => res.ok),
-    sendBulkEmail: (data: { role: string, subject: string, message: string }) => fetch(`${BASE_URL}/users/bulk-email`, {
+    sendBulkEmail: (data: { role: string, subject: string, message: string, isHtml?: boolean }) => fetch(`${BASE_URL}/users/bulk-email`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),

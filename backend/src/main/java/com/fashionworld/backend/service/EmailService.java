@@ -25,6 +25,9 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String mailFrom;
 
+    @Value("${FRONTEND_URL:http://localhost:5173}")
+    private String frontendUrl;
+
     @Async
     public void sendSimpleEmail(String toEmail, String subject, String body) {
         try {
@@ -96,7 +99,7 @@ public class EmailService {
                "      </div>" +
                "      <div class='footer'>" +
                "        &copy; " + java.time.LocalDate.now().getYear() + " Fashion World. All rights reserved.<br>" +
-               "        If you have any questions, visit our <a href='http://localhost:5173/contact'>Support Center</a>.<br>" +
+               "        If you have any questions, visit our <a href='" + frontendUrl + "/contact'>Support Center</a>.<br>" +
                "        This is an automated transactional email from Fashion World." +
                "      </div>" +
                "    </div>" +
@@ -118,7 +121,7 @@ public class EmailService {
                          "  <li style='margin-bottom: 8px;'>Personalized Style Recommendations</li>" +
                          "</ul>" +
                          "<p>To explore our latest collections, please click the button below.</p>";
-        String html = getBaseEmailTemplate(title, content, "Explore Collection", "http://localhost:5173/collection");
+        String html = getBaseEmailTemplate(title, content, "Explore Collection", frontendUrl + "/collection");
         sendHtmlEmail(toEmail, "Welcome to Fashion World", html);
     }
 
@@ -208,7 +211,7 @@ public class EmailService {
                          shippingHtml.toString() +
                          "<p>You can track the live status of your shipment by clicking the button below.</p>";
 
-        String html = getBaseEmailTemplate(title, content, "Track Your Order", "http://localhost:5173/track-order?id=" + order.getOrderId());
+        String html = getBaseEmailTemplate(title, content, "Track Your Order", frontendUrl + "/track-order?id=" + order.getOrderId());
         sendHtmlEmail(toEmail, "Your Order " + order.getOrderId() + " Placed Successfully!", html);
     }
 
@@ -237,7 +240,7 @@ public class EmailService {
                          itemsHtml.toString() +
                          "<p>We hope you love your new wardrobe addition! If you have a moment, we would love to hear your feedback on the fit, quality, and your shopping experience.</p>";
 
-        String html = getBaseEmailTemplate(title, content, "Write a Product Review", "http://localhost:5173/profile");
+        String html = getBaseEmailTemplate(title, content, "Write a Product Review", frontendUrl + "/profile");
         sendHtmlEmail(toEmail, "Delivered: Your Fashion World order #" + order.getOrderId(), html);
     }
 

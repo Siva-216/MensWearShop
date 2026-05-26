@@ -118,7 +118,7 @@ const UsersPage: React.FC = () => {
   });
 
   const bulkEmailMutation = useMutation({
-    mutationFn: (data: { role: string, subject: string, message: string }) => api.users.sendBulkEmail(data),
+    mutationFn: (data: { role: string, subject: string, message: string, isHtml?: boolean }) => api.users.sendBulkEmail(data),
     onSuccess: (data: any) => {
       toast({ title: "Emails Sent", description: "The bulk notification has been broadcast successfully." });
       setIsBulkEmailModalOpen(false);

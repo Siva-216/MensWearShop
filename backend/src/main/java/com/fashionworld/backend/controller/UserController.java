@@ -26,6 +26,9 @@ public class UserController {
     @Autowired
     private com.fashionworld.backend.service.EmailService emailService;
 
+    @org.springframework.beans.factory.annotation.Value("${FRONTEND_URL:http://localhost:5173}")
+    private String frontendUrl;
+
     @GetMapping
     public ResponseEntity<?> getAllUsers() {
         try {
@@ -74,7 +77,7 @@ public class UserController {
             String name = userService.findByEmail(email).map(User::getName).orElse("Valued Customer");
             
             // Reset link pointing to frontend URL
-            String resetUrl = "http://localhost:5173/reset-password?token=" + token;
+            String resetUrl = frontendUrl + "/reset-password?token=" + token;
             
             emailService.sendForgotPasswordEmail(email, name, resetUrl);
             return ResponseEntity.ok(java.util.Map.of("message", "Password reset link sent to your email."));
@@ -135,17 +138,35 @@ public class UserController {
     }
 
     @PostMapping("/bulk-email")
-    public ResponseEntity<?> sendBulkEmail(@RequestBody java.util.Map<String, String> emailData) {
+    public ResponseEntity<?> sendBulkEmail(@RequestBody java.util.Map<String, Object> emailData) {
         try {
-            String role = emailData.get("role");
-            String subject = emailData.get("subject");
-            String message = emailData.get("message");
+            String role = String.valueOf(emailData.get("role"));
+            String subject = String.valueOf(emailData.get("subject"));
+            String message = String.valueOf(emailData.get("message"));
+            
+            boolean isHtml = false;
+            if (emailData.containsKey("isHtml")) {
+                Object val = emailData.get("isHtml");
+                if (val instanceof Boolean) {
+                    isHtml = (Boolean) val;
+                } else if (val instanceof String) {
+                    isHtml = Boolean.parseBoolean((String) val);
+                }
+            }
+            
+            final boolean finalIsHtml = isHtml;
             
             java.util.List<User> recipients = userService.findAll().stream()
                 .filter(u -> role.equalsIgnoreCase("all") || (u.getRole() != null && u.getRole().equalsIgnoreCase(role)))
                 .collect(java.util.stream.Collectors.toList());
             
-            recipients.forEach(u -> emailService.sendSimpleEmail(u.getEmail(), subject, message));
+            recipients.forEach(u -> {
+                if (finalIsHtml) {
+                    emailService.sendHtmlEmail(u.getEmail(), subject, message);
+                } else {
+                    emailService.sendSimpleEmail(u.getEmail(), subject, message);
+                }
+            });
             
             return ResponseEntity.ok("Successfully sent email to " + recipients.size() + " " + (role.equalsIgnoreCase("all") ? "users" : role + "s") + ".");
         } catch (Exception e) {
