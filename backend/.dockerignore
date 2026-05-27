@@ -1,0 +1,28 @@
+# Maven build output – built inside Docker, not needed from host
+target/
+
+# IDE & editor metadata
+.idea/
+*.iml
+.vscode/
+*.iws
+*.ipr
+
+# Development / local-only files
+.env
+*.log
+backend_log.txt
+startup_logs_fresh.txt
+compile_errors.txt
+scratch/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Uploaded files (handled by volume / cloud storage in production)
+uploads/
+
+# Maven wrapper JAR (downloaded during build)
+.mvn/wrapper/maven-wrapper.jar

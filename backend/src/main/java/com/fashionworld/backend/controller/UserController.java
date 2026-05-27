@@ -26,7 +26,7 @@ public class UserController {
     @Autowired
     private com.fashionworld.backend.service.EmailService emailService;
 
-    @org.springframework.beans.factory.annotation.Value("${FRONTEND_URL:http://localhost:5173}")
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
     @GetMapping
