@@ -238,9 +238,11 @@ public class EmailService {
                          "<p>Hello " + name + ",</p>" +
                          "<p>Great news! Your order <strong>#" + order.getOrderId() + "</strong> has been successfully delivered to your shipping address.</p>" +
                          itemsHtml.toString() +
-                         "<p>We hope you love your new wardrobe addition! If you have a moment, we would love to hear your feedback on the fit, quality, and your shopping experience.</p>";
+                         "<p>We hope you love your new wardrobe addition! Your honest feedback helps other shoppers and helps us improve. Click the button below to open your order and write a review for each item.</p>";
 
-        String html = getBaseEmailTemplate(title, content, "Write a Product Review", frontendUrl + "/profile");
+        // Deep-link directly to the order detail page so the user can click 'Write Review' on each item
+        String reviewUrl = frontendUrl + "/profile/orders/" + order.getOrderId();
+        String html = getBaseEmailTemplate(title, content, "Write a Product Review", reviewUrl);
         sendHtmlEmail(toEmail, "Delivered: Your Fashion World order #" + order.getOrderId(), html);
     }
 
