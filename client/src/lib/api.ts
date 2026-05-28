@@ -1,5 +1,9 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8082/api';
 
+// Base URL of the backend server (without /api) — used for image/upload paths
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8082';
+
+
 const getHeaders = () => {
   return {
     'Content-Type': 'application/json',

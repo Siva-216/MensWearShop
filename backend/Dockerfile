@@ -23,9 +23,11 @@ WORKDIR /app
 # Copy the fat JAR produced by the builder stage
 COPY --from=builder /app/target/*.jar app.jar
 
-# Render injects PORT at runtime; Spring reads it via ${PORT:8082}
-EXPOSE 8082
+# Render injects PORT dynamically – Spring Boot reads it via ${PORT:8082}
+# DO NOT hardcode EXPOSE to 8082 as Render uses a different dynamic port (e.g., 10000)
+EXPOSE ${PORT:-8082}
 
-# All secrets (MONGODB_URI, JWT_SECRET, MAIL_*, FRONTEND_URL) are injected
-# as environment variables by Render – no .env file is needed in production.
+# All secrets (MONGODB_URI, JWT_SECRET, MAIL_*, FRONTEND_URL) must be set
+# as Environment Variables in the Render dashboard (not in .env which is gitignored).
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
